@@ -72,6 +72,7 @@ export const handler = async (event: { httpMethod: string; body?: string | null 
 
     return json(200, result);
   } catch (error) {
+    console.error("run-finish failed", error);
     return json(500, { error: error instanceof Error ? error.message : "run finish failed" });
   }
 };

@@ -19,6 +19,7 @@ export const handler = async (event: { httpMethod: string; body?: string | null 
 
     return json(200, rows[0]);
   } catch (error) {
+    console.error("run-start failed", error);
     return json(500, { error: error instanceof Error ? error.message : "run start failed" });
   }
 };

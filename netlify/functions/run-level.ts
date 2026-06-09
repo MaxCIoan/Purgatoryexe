@@ -51,6 +51,7 @@ export const handler = async (event: { httpMethod: string; body?: string | null 
 
     return json(200, { ok: true, levels });
   } catch (error) {
+    console.error("run-level failed", error);
     return json(500, { error: error instanceof Error ? error.message : "level update failed" });
   }
 };

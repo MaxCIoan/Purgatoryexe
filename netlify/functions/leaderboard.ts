@@ -20,6 +20,7 @@ export const handler = async (event: { httpMethod: string }) => {
 
     return json(200, { leaders });
   } catch (error) {
+    console.error("leaderboard failed", error);
     return json(500, { error: error instanceof Error ? error.message : "leaderboard failed" });
   }
 };
