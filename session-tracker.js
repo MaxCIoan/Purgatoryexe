@@ -3,7 +3,7 @@
   const HISTORY_KEY = "socialCreditAttemptHistoryV1";
   const PROFILE_KEY = "socialCreditAgentProfileV1";
   const TRUSTED_PROGRESS_KEY = "socialCreditTrustedProgressV1";
-  const TRACKER_VERSION = "20260609e";
+  const TRACKER_VERSION = "20260609f";
   const page = document.body.dataset.level || "unknown";
   const appRoot = new URL(".", document.currentScript?.src || window.location.href);
   const appUrl = path => new URL(String(path).replace(/^\/+/, ""), appRoot).href;
@@ -42,6 +42,8 @@
       officialResult: null,
       tampered: false,
       tamperReason: null,
+      invalidRun: false,
+      invalidReason: null,
       archived: false
     };
   }
@@ -216,6 +218,27 @@
       finalScore: 0,
       elapsedMs: session.startedAt ? Math.max(0, Date.now() - session.startedAt) : 0,
       tampered: true,
+      tamperReason: reason
+    };
+    Object.values(session.levels || {}).forEach(level => {
+      level.score = 0;
+      level.completedAt = null;
+    });
+    saveSession();
+    writeTrustedProgress();
+  }
+
+  function markInvalidRun(reason) {
+    sanitizeLocalProgress();
+    session.invalidRun = true;
+    session.invalidReason = reason;
+    session.totalScore = 0;
+    session.completedAt ||= Date.now();
+    session.activeLevel = null;
+    session.officialResult = {
+      finalScore: 0,
+      elapsedMs: session.startedAt ? Math.max(0, Date.now() - session.startedAt) : 0,
+      tampered: false,
       tamperReason: reason
     };
     Object.values(session.levels || {}).forEach(level => {
@@ -475,6 +498,10 @@
       session.totalScore = 0;
       return;
     }
+    if (session.invalidRun) {
+      session.totalScore = 0;
+      return;
+    }
     session.totalScore = Object.values(session.levels).reduce((sum, level) => sum + (Number(level.score) || 0), 0);
   }
 
@@ -493,6 +520,12 @@
       Number(localStorage.getItem("bossScore") || 0) || 0
     );
     const numericScore = knownBossScore;
+    if (numericScore < levelCompletionMinimums.boss) {
+      markInvalidRun("boss run was finished below the required score");
+      archiveAttempt("invalid");
+      render();
+      return;
+    }
     if (numericScore > levelScoreCaps.boss) {
       markTampered("boss score exceeded the allowed cap");
       session.completedAt ||= Date.now();
@@ -632,7 +665,7 @@
       <p>Current time: ${new Date().toLocaleTimeString()}</p>
       <p>Total score: ${session.totalScore.toLocaleString()}</p>
       <p>Total run time: ${formatDuration(elapsed)}</p>
-      <p>Status: ${session.tampered ? `<span class="tampered">TAMPERED: ${session.tamperReason || "modified local storage"}</span>` : session.completedAt ? '<span class="complete">COMPLETED</span>' : session.startedAt ? '<span class="active">RUNNING</span>' : "NOT STARTED"}</p>
+      <p>Status: ${session.tampered ? `<span class="tampered">TAMPERED: ${session.tamperReason || "modified local storage"}</span>` : session.invalidRun ? `<span class="tampered">INVALID: ${session.invalidReason || "run failed validation"}</span>` : session.completedAt ? '<span class="complete">COMPLETED</span>' : session.startedAt ? '<span class="active">RUNNING</span>' : "NOT STARTED"}</p>
       <p>Official score: ${officialLine}</p>
       <div class="agent-menu-actions">
         <a href="${appUrl("profile.html")}">Edit Profile</a>
