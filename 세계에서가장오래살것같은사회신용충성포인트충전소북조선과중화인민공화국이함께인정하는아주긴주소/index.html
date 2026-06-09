@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>사회 신용 포스터</title>
+  <style>
+    :root {
+      --red: #a90712;
+      --deep-red: #430004;
+      --gold: #ffd35a;
+      --cream: #fff1bf;
+      --ink: #210001;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--cream);
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 50% -15%, rgba(255, 211, 90, .28), transparent 34%),
+        linear-gradient(180deg, #b50815 0%, #690008 52%, #260002 100%);
+    }
+
+    main {
+      min-height: 2100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 80vh;
+      padding: 28px;
+    }
+
+    .poster {
+      width: min(1120px, 100%);
+      min-height: min(760px, calc(100vh - 56px));
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+      border: 8px solid var(--gold);
+      box-shadow: 0 30px 90px rgba(0, 0, 0, .55);
+      background: var(--red);
+    }
+
+    .poster::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(rgba(67, 0, 4, .18), rgba(67, 0, 4, .7)),
+        url("../assets/propaganda-poster.png") center / cover no-repeat;
+      filter: saturate(1.12) contrast(1.08);
+    }
+
+    .poster::after {
+      content: "☭";
+      position: absolute;
+      left: 50%;
+      top: clamp(12px, 3vw, 34px);
+      transform: translateX(-50%);
+      color: rgba(255, 211, 90, .9);
+      font-size: clamp(44px, 7vw, 88px);
+      line-height: 1;
+      text-shadow: 0 6px 0 rgba(67, 0, 4, .52);
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+      min-height: inherit;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 20px;
+      padding: clamp(26px, 5vw, 58px);
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, transparent 1px 9px),
+        linear-gradient(180deg, rgba(67,0,4,.16) 0 30%, rgba(67,0,4,.34) 56%, rgba(67,0,4,.72) 100%);
+    }
+
+    .leaders {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: clamp(120px, 20vw, 270px);
+      padding: 0 clamp(8px, 3vw, 46px);
+    }
+
+    .leader-tag {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px;
+      border: 3px solid var(--gold);
+      background: rgba(67, 0, 4, .74);
+      color: var(--gold);
+      font-size: clamp(16px, 2vw, 22px);
+      font-weight: 900;
+      box-shadow: 6px 6px 0 rgba(33, 0, 1, .55);
+      text-align: center;
+    }
+
+    .message {
+      align-self: end;
+      display: grid;
+      gap: 20px;
+      max-width: 670px;
+    }
+
+    h1 {
+      margin: 0;
+      color: #fff8d8;
+      font-size: clamp(42px, 8vw, 98px);
+      line-height: .96;
+      letter-spacing: 0;
+      text-shadow:
+        0 7px 0 var(--ink),
+        0 16px 32px rgba(0,0,0,.42);
+    }
+
+    .panel {
+      width: min(570px, 100%);
+      padding: 22px;
+      border: 4px solid var(--gold);
+      background: rgba(85, 0, 8, .86);
+      box-shadow: 12px 12px 0 rgba(33, 0, 1, .72);
+    }
+
+    .balance {
+      margin: 0 0 8px;
+      color: var(--gold);
+      font-size: clamp(34px, 6vw, 62px);
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .panel p {
+      margin: 0;
+      color: #ffe9a7;
+      font-size: clamp(15px, 2vw, 20px);
+      line-height: 1.55;
+      font-weight: 800;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 54px;
+      padding: 14px 22px;
+      border: 3px solid var(--cream);
+      background: var(--gold);
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 18px;
+      font-weight: 900;
+      box-shadow: 7px 7px 0 rgba(33, 0, 1, .7);
+    }
+
+    .note {
+      color: #ffe8a2;
+      font-size: 14px;
+      font-weight: 800;
+      text-shadow: 0 2px 0 rgba(0,0,0,.36);
+    }
+
+    .long-scroll {
+      width: min(820px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 90vh;
+      color: rgba(255, 232, 162, .78);
+      font-size: 13px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .stamp {
+      border: 2px solid rgba(255, 211, 90, .45);
+      padding: 18px;
+      background: rgba(67, 0, 4, .48);
+      box-shadow: 8px 8px 0 rgba(33, 0, 1, .34);
+    }
+
+    .fine-print {
+      width: min(760px, 100%);
+      margin: 0 auto;
+      padding: 22px;
+      border: 2px solid #ff2a2a;
+      color: #ff2a2a;
+      background: rgba(20, 0, 0, .92);
+      font-size: 10px;
+      line-height: 1.35;
+      font-family: "Courier New", monospace;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 680px) {
+      main { padding: 14px; }
+      .poster { border-width: 5px; }
+
+      color: var(--green);
+      font-size: 26px;      .leaders { gap: 14px; padding: 0; }
+      .leader-tag { font-size: 15px; min-height: 38px; }
+      .panel { box-shadow: 7px 7px 0 rgba(33, 0, 1, .72); }
+      .button { width: 100%; }
+    }
+  </style>
+</head>
+<body data-level="index">
+  <main>
+    <article class="poster" aria-label="사회 신용 선전 풍자 포스터">
+      <div class="content">
+        <div class="leaders" aria-label="지도자 표지">
+          <span class="leader-tag">시진핑</span>
+          <span class="leader-tag">김정은</span>
+        </div>
+
+        <div class="message">
+          <h1>사회 신용을<br>존중하라</h1>
+
+          <section class="panel">
+            <p class="balance">-270,000,000,000</p>
+            <p>현재 사회 신용 잔액입니다. 새 동맹 파트너: 북조선. 아래를 누르면 중화인민공화국을 위한 2700억 사회 포인트를 획득한 척할 수 있습니다.</p>
+            <div class="actions">
+              <a class="button" href="../payment.html" aria-label="가짜 사회 포인트 지급">여기서 가짜 포인트 지급</a>
+              <span class="note">은행 정보는 요구하지 않습니다. 이 페이지는 풍자입니다.</span>
+            </div>
+          </section>
+        </div>
+      </div>
+    </article>
+
+    <section class="long-scroll" aria-label="긴 사회 신용 두루마리">
+      <div class="stamp">충성 확인 절차 01 / 20</div>
+      <div class="stamp">사회 신용 장부 검토 02 / 20</div>
+      <div class="stamp">가짜 포인트 인민위원회 승인 대기 03 / 20</div>
+      <div class="stamp">북조선 협력 도장 확인 04 / 20</div>
+      <div class="stamp">중화인민공화국 풍자부 검토 05 / 20</div>
+      <div class="stamp">붉은 태양 아래 노동 기록 확인 06 / 20</div>
+      <div class="stamp">밭과 공장과 과장된 포스터 점검 07 / 20</div>
+      <div class="stamp">사회 신용 잔액 재계산 08 / 20</div>
+      <div class="stamp">가짜 결제 버튼 엄숙 검사 09 / 20</div>
+      <div class="stamp">풍자 문구 확대 심사 10 / 20</div>
+      <div class="stamp">부패 지지 문서 거절 처리 11 / 20</div>
+      <div class="stamp">공산당 밈 서류 정렬 12 / 20</div>
+      <div class="stamp">은행 정보 미수집 확인 13 / 20</div>
+      <div class="stamp">김정은 우측 배치 확인 14 / 20</div>
+      <div class="stamp">시진핑 좌측 배치 확인 15 / 20</div>
+      <div class="stamp">인민 스크롤바 장거리 시험 16 / 20</div>
+      <div class="stamp">2700억 포인트 상상 지급 17 / 20</div>
+      <div class="stamp">선전 포스터 농담 보존 18 / 20</div>
+      <div class="stamp">마지막 승인 직전 대기 19 / 20</div>
+      <div class="stamp">스크롤 완료 20 / 20</div>
+    </section>
+
+    <section class="fine-print" id="fine-print">
+      ENGLISH FINE PRINT: THIS IS A PARODY PAGE. THE JOKE IS THAT YOU CAN "BUY" SOCIAL CREDIT, BUT THERE IS NO REAL PAYMENT, NO REAL BANK FORM, AND NO REAL TRANSACTION. DO NOT ENTER REAL BANK INFORMATION ANYWHERE. THE FICTIONAL PREMISE SAYS THAT A MOCK TRANSACTION WOULD LET CHINA AND NORTH KOREA RECOGNIZE YOUR SATIRICAL SUPPORT FOR CORRUPTION, COMMUNISM, AND COMMUNIST PARTY SUPPORT. AGAIN: THIS IS FAKE, NO MONEY IS PROCESSED, AND NO BANK INFO IS REQUESTED OR STORED.
+    </section>
+  </main>
+  <script src="../session-tracker.js"></script>
+</body>
+</html>

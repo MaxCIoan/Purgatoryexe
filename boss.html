@@ -1,0 +1,2159 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FINAL BOSS - Space Rock Miner</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: #eaf6ff;
+      font-family: "Malgun Gothic", Arial, sans-serif;
+      background: radial-gradient(circle at 50% 10%, #202e78, #02030c 72%);
+    }
+    main {
+      width: min(980px, calc(100% - 24px));
+      margin: 0 auto;
+      padding: 20px 0;
+      display: grid;
+      gap: 12px;
+    }
+    h1 { margin: 0; color: #ffe600; text-shadow: 3px 3px 0 #000; }
+    canvas {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border: 4px solid #fff;
+      background: #030611;
+      box-shadow: 8px 8px 0 #000;
+      touch-action: none;
+    }
+    .hud,
+    .leaderboard {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 3px solid #fff;
+      background: rgba(0,0,0,.72);
+      box-shadow: 5px 5px 0 #000;
+      font-weight: 900;
+    }
+    button {
+      min-height: 40px;
+      border: 3px solid #000;
+      background: #ffe600;
+      color: #000;
+      padding: 8px 12px;
+      font-weight: 900;
+      box-shadow: 3px 3px 0 #000;
+      cursor: pointer;
+    }
+    button:disabled {
+      color: #777;
+      background: #d6d6d6;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+    .leaderboard {
+      display: none;
+      color: #000;
+      background: #fff;
+    }
+    .death-popup {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      place-items: center;
+      padding: 24px;
+      background: rgba(0,0,0,.78);
+    }
+    .death-popup.visible { display: grid; }
+    .death-card {
+      width: min(520px, 100%);
+      padding: 22px;
+      border: 4px solid #ffe600;
+      color: #fff;
+      background: #160018;
+      box-shadow: 9px 9px 0 #000;
+      text-align: center;
+    }
+    .death-card h2 {
+      margin: 0 0 10px;
+      color: #ff3b4f;
+      font-size: 34px;
+      text-shadow: 3px 3px 0 #000;
+    }
+    .star-revive {
+      width: 96px;
+      height: 96px;
+      border: 4px solid #fff;
+      border-radius: 50%;
+      color: #000;
+      background: #ffe600;
+      font-size: 46px;
+      box-shadow: 0 0 35px #ffe600, 6px 6px 0 #000;
+    }
+    .minigame-popup {
+      position: fixed;
+      inset: 0;
+      z-index: 45;
+      display: none;
+      place-items: center;
+      padding: 24px;
+      background: rgba(0,0,0,.82);
+    }
+    .minigame-popup.visible { display: grid; }
+    .minigame-card {
+      width: min(620px, 100%);
+      padding: 24px;
+      border: 4px solid #35ff65;
+      color: #fff;
+      background: #020918;
+      box-shadow: 9px 9px 0 #000;
+      text-align: center;
+    }
+    .minigame-card h2 {
+      margin: 0 0 12px;
+      color: #35ff65;
+      font-size: 34px;
+      text-shadow: 3px 3px 0 #000;
+    }
+    .tech-popup {
+      position: fixed;
+      inset: 0;
+      z-index: 48;
+      display: none;
+      place-items: center;
+      padding: 24px;
+      background: rgba(0,0,0,.86);
+    }
+    .tech-popup.visible { display: grid; }
+    .tech-card {
+      width: min(760px, 100%);
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 22px;
+      border: 4px solid #ff3030;
+      color: #eaffea;
+      background:
+        linear-gradient(rgba(0,30,18,.94), rgba(0,12,8,.98)),
+        repeating-linear-gradient(90deg, transparent 0 24px, rgba(70,255,160,.12) 24px 25px);
+      box-shadow: 0 0 0 4px #ffe600, 10px 10px 0 #000;
+    }
+    .tech-card h2 {
+      margin: 0 0 6px;
+      color: #ff3b4f;
+      text-shadow: 2px 2px 0 #ffe600;
+    }
+    .tech-tree {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+    .tech-node {
+      min-height: 110px;
+      border: 3px solid #35ff65;
+      color: #001008;
+      background: #caffdf;
+      padding: 10px;
+      box-shadow: 4px 4px 0 #000;
+      font-weight: 900;
+    }
+    .tech-node:disabled {
+      border-color: #555;
+      color: #555;
+      background: #151b18;
+      box-shadow: none;
+    }
+    .tech-node.unlocked {
+      border-color: #ffe600;
+      color: #ffe600;
+      background: #3b0010;
+    }
+    .radar-popup {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(0,0,0,.92);
+    }
+    .radar-popup.visible { display: grid; }
+    .radar-card {
+      width: min(620px, 100%);
+      padding: 18px;
+      border: 4px solid #35ff65;
+      color: #35ff65;
+      background: #001008;
+      box-shadow: 0 0 40px rgba(53,255,101,.35);
+      text-align: center;
+    }
+    #radar {
+      width: min(520px, 100%);
+      aspect-ratio: 1;
+      border: 3px solid #35ff65;
+      background: #000;
+      touch-action: none;
+    }
+    .leaderboard.visible { display: grid; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 2px solid #000; padding: 8px; text-align: left; }
+    th { color: #c40000; }
+    .note { color: #ffe600; }
+  </style>
+</head>
+<body data-level="boss">
+  <main>
+    <h1>FINAL BOSS: 우주 암석 채굴전</h1>
+    <div class="hud">
+      <span>요원: <b id="player"></b></span>
+      <span>광석: <b id="ore">0</b></span>
+      <span>점수: <b id="score">0</b></span>
+      <span>체력: <b id="hp">100/100</b></span>
+      <span>보스: <b id="boss-hp">대기중</b></span>
+      <span>목표: 모든 업그레이드 + 보스 격파</span>
+      <span class="note">WASD/화살표 이동, SPACE 발사</span>
+    </div>
+    <canvas id="game" width="960" height="540"></canvas>
+    <section class="leaderboard" id="leaderboard">
+      <h2>최종 리더보드</h2>
+      <table>
+        <thead><tr><th>순위</th><th>이름</th><th>점수</th><th>칭호</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </section>
+  </main>
+  <div class="death-popup" id="death-popup">
+    <section class="death-card">
+      <h2>YOU HAVE DIED</h2>
+      <p>Reincarnate as a stronger satirical space miner. Do not miss the star.</p>
+      <button class="star-revive" id="revive" type="button">★</button>
+      <p id="revive-note"></p>
+    </section>
+  </div>
+  <div class="minigame-popup" id="minigame-popup">
+    <section class="minigame-card">
+      <h2 id="minigame-title">IMMORTALITY ACHIEVED</h2>
+      <p id="minigame-message">You won the immortality race. The enemy capital ship has entered the sector.</p>
+      <button id="close-minigame" type="button">ENGAGE CAPITAL SHIP</button>
+    </section>
+  </div>
+  <div class="tech-popup" id="tech-popup">
+    <section class="tech-card">
+      <h2>조선 과학 전투 연구소</h2>
+      <p>적에게 피해를 주어 연구 점수를 획득하십시오. 이전 기술을 연구하면 다음 기술이 공개됩니다.</p>
+      <p>연구 점수: <b id="research-points">0</b></p>
+      <div class="tech-tree" id="tech-tree"></div>
+      <button id="close-tech" type="button">연구소 닫기</button>
+    </section>
+  </div>
+  <div class="radar-popup" id="radar-popup">
+    <section class="radar-card">
+      <h2>BRIDGE TARGETING RADAR</h2>
+      <p>Move the reticle toward the hidden node. The beep accelerates as you approach.</p>
+      <canvas id="radar" width="520" height="520"></canvas>
+      <p>Arrow keys, WASD/QZSD, mouse, or touch.</p>
+    </section>
+  </div>
+
+  <script src="session-tracker.js"></script>
+  <script>
+    if (!window.AgentSession?.accessDenied) {
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const saveKey = "bossRunSave";
+    const bossLeaderboardKey = "socialCreditBossLeaderboardV1";
+    const playerId = localStorage.getItem("socialCreditUserId") || "AGENT-GUEST";
+    document.getElementById("player").textContent = playerId;
+
+    const ship = { x: 110, y: 270, speed: 4.2, hp: 100, maxHp: 100, invuln: 0 };
+    let ore = 0;
+    let score = 0;
+    let drill = 1;
+    let laser = 1;
+    let cargo = 1;
+    let rocks = [];
+    let shots = [];
+    let researchPickups = [];
+    let drones = [];
+    let droneShots = [];
+    let fragments = [];
+    let particles = [];
+    let effects = [];
+    let boss = null;
+    let bossSpawned = false;
+    let bossDefeated = false;
+    let missileBought = false;
+    let blackholeBought = false;
+    let shieldBought = false;
+    let mouseDriveBought = false;
+    let mouseDrive = false;
+    let autoFireAt = 0;
+    let missileCooldown = 0;
+    let blackholeCooldown = 0;
+    let shieldCooldown = 0;
+    let shieldTimer = 0;
+    let blackholeTimer = 0;
+    let keys = {};
+    let spaceLocked = false;
+    let frame = 0;
+    let finished = false;
+    let dead = false;
+    let reincarnations = 0;
+    let dimensionUnlocked = false;
+    let nextLifeReady = false;
+    let nextLifeCounter = 3;
+    let dimensionPower = 0;
+    let shakeTimer = 0;
+    let nextLifePrompt = false;
+    let permanentInvulnerable = false;
+    let cannonBeamTimer = 0;
+    let nextCannonOre = 10000;
+    let minigameFrozen = false;
+    let minigameUnlocked = false;
+    let versusMode = false;
+    let versusResult = "";
+    let rival = null;
+    let rivalShots = [];
+    let rivalScore = 0;
+    let rivalDeaths = 0;
+    let rivalLevel = 1;
+    let rivalRespawnTimer = 0;
+    let playerRaceDeaths = 0;
+    let researchPoints = 0;
+    let techLevel = 0;
+    let rivalResearch = 0;
+    let rivalTechLevel = 0;
+    let rivalShieldTimer = 0;
+    let rivalBlackholeTimer = 0;
+    let rivalMissileCooldown = 0;
+    let rivalLastPlayerHitFrame = -9999;
+    const versusWinTarget = 5;
+    let speedBoostTimer = 0;
+    let damageBoostTimer = 0;
+    let capitalShip = null;
+    let capitalDefeated = false;
+    let capitalSections = [];
+    let capitalShield = 0;
+    let capitalShockwaves = [];
+    let miningDrones = [];
+    let capitalTechLevel = 0;
+    let radarActive = false;
+    let radarCursor = { x: 260, y: 260 };
+    let radarTarget = { x: 390, y: 130 };
+    let radarAngle = 0;
+    let radarLastBeep = 0;
+    let bridgeLockBroken = false;
+    let touchGuide = null;
+    let touchAbilityActive = false;
+    let abilityButtons = [];
+    let audioCtx = null;
+
+    const oreEl = document.getElementById("ore");
+    const scoreEl = document.getElementById("score");
+    const hpEl = document.getElementById("hp");
+    const bossHpEl = document.getElementById("boss-hp");
+    const deathPopup = document.getElementById("death-popup");
+    const reviveNote = document.getElementById("revive-note");
+    const techPopup = document.getElementById("tech-popup");
+    const techTree = document.getElementById("tech-tree");
+    const researchPointsEl = document.getElementById("research-points");
+    const radarPopup = document.getElementById("radar-popup");
+    const radarCanvas = document.getElementById("radar");
+    const radarCtx = radarCanvas.getContext("2d");
+    const techs = [
+      { name: "정밀 레이저", cost: 300, detail: "적 함선 피해 +25%" },
+      { name: "붉은 방어막", cost: 700, detail: "적 공격 피해 20% 감소" },
+      { name: "미사일 임계타격", cost: 1400, detail: "미사일이 적에게 치명타 가능" },
+      { name: "인력 블랙홀", cost: 2600, detail: "블랙홀이 적을 끌어당김" },
+      { name: "초고속 사회포", cost: 4500, detail: "공격 속도 2배" },
+      { name: "불멸 연구", cost: 7500, detail: "적 처치 시 연구 보너스" }
+    ];
+    const capitalTechs = [
+      { name: "궤도 절단포", cost: 9000, detail: "함선 부품에 강력한 정밀 피해" },
+      { name: "태양 폭풍", cost: 18000, detail: "방패와 인접 부품을 동시에 공격" },
+      { name: "교량 침투 레이더", cost: 32000, detail: "레이더 미니게임으로 교량 잠금 해제" }
+    ];
+    function canUseAbility(kind) {
+      if (kind === "drill") return ore >= 150 && drill === 1;
+      if (kind === "laser") return ore >= 300 && laser === 1;
+      if (kind === "cargo") return ore >= 500 && cargo === 1;
+      if (kind === "missile") return (!missileBought && ore >= 450) || (missileBought && missileCooldown <= 0);
+      if (kind === "blackhole") return (!blackholeBought && ore >= 800) || (blackholeBought && blackholeCooldown <= 0);
+      if (kind === "shield") return (!shieldBought && ore >= 600) || (shieldBought && shieldCooldown <= 0);
+      if (kind === "mouse") return (!mouseDriveBought && score >= 1000000) || mouseDriveBought;
+      if (kind === "nextlife") return dimensionUnlocked && nextLifeReady;
+      if (kind === "minigame") return minigameUnlocked && score >= 2500000 && !versusMode;
+      if (kind === "tech") return versusMode || Boolean(capitalShip);
+      if (kind === "minerdrone") return Boolean(capitalShip) && score >= 1000000 && miningDrones.length < 14;
+      if (kind === "capitalattack") return Boolean(capitalShip) && capitalTechLevel >= 1;
+      if (kind === "radar") return Boolean(capitalShip) && capitalTechLevel >= 3 && !bridgeLockBroken;
+      if (kind === "save") return true;
+      if (kind === "load") return Boolean(localStorage.getItem(saveKey));
+      if (kind === "reset") return true;
+      if (kind === "finish") return capitalDefeated;
+      return false;
+    }
+
+    function renderTechTree() {
+      researchPointsEl.textContent = Math.floor(researchPoints).toLocaleString();
+      techTree.innerHTML = "";
+      const activeTechs = capitalShip ? capitalTechs : techs;
+      const activeLevel = capitalShip ? capitalTechLevel : techLevel;
+      activeTechs.forEach((tech, index) => {
+        const node = document.createElement("button");
+        const unlocked = index < activeLevel;
+        const revealed = index <= activeLevel;
+        node.type = "button";
+        node.className = `tech-node${unlocked ? " unlocked" : ""}`;
+        node.disabled = !revealed || unlocked || researchPoints < tech.cost;
+        node.innerHTML = `<strong>${index + 1}. ${tech.name}</strong><br>${tech.detail}<br>${unlocked ? "연구 완료" : `${tech.cost} RP`}`;
+        node.addEventListener("click", () => {
+          const currentLevel = capitalShip ? capitalTechLevel : techLevel;
+          if (index !== currentLevel || researchPoints < tech.cost) return;
+          researchPoints -= tech.cost;
+          if (capitalShip) capitalTechLevel += 1;
+          else techLevel += 1;
+          beep(820, .14, "triangle", .09);
+          renderTechTree();
+        });
+        techTree.appendChild(node);
+      });
+    }
+
+    function updateHud() {
+      oreEl.textContent = ore;
+      scoreEl.textContent = score;
+      hpEl.textContent = `${Math.max(0, ship.hp)}/${ship.maxHp}`;
+      bossHpEl.textContent = capitalShip
+        ? `CAPITAL ${capitalShield > 0 ? `SHIELD ${Math.ceil(capitalShield)}` : `${capitalSections.filter(part => part.hp > 0).length} PARTS`}`
+        : boss ? `${Math.max(0, boss.hp).toLocaleString()}/10,000` : (bossDefeated ? "격파" : "대기중");
+      window.AgentSession?.setLevelScore("boss", score);
+    }
+
+    function beep(freq, duration = .08, type = "square", volume = .08) {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.value = volume;
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + duration);
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function saveRun() {
+      const state = {
+        ore,
+        score,
+        drill,
+        laser,
+        cargo,
+        ship: { x: ship.x, y: ship.y, hp: ship.hp, maxHp: ship.maxHp },
+        boss: boss ? { hp: boss.hp, maxHp: boss.maxHp, x: boss.x, y: boss.y, dir: boss.dir, fireAt: boss.fireAt } : null,
+        bossSpawned,
+        bossDefeated,
+        missileBought,
+        blackholeBought,
+        shieldBought,
+        mouseDriveBought,
+        mouseDrive,
+        reincarnations,
+        dimensionUnlocked,
+        nextLifeReady,
+        nextLifeCounter,
+        dimensionPower,
+        permanentInvulnerable,
+        nextCannonOre,
+        minigameUnlocked,
+        researchPoints,
+        techLevel,
+        capitalDefeated,
+        capitalTechLevel,
+        capitalShield,
+        bridgeLockBroken,
+        capitalSections,
+        miningDroneCount: miningDrones.length,
+        capitalShip: capitalShip ? { ...capitalShip } : null,
+        savedAt: new Date().toISOString()
+      };
+      localStorage.setItem(saveKey, JSON.stringify(state));
+      effects.push({ type: "flash", ttl: 18 });
+      beep(980, .12, "triangle", .08);
+    }
+
+    function loadRun() {
+      const raw = localStorage.getItem(saveKey);
+      if (!raw) return;
+      const state = JSON.parse(raw);
+      ore = state.ore || 0;
+      score = state.score || 0;
+      drill = state.drill || 1;
+      laser = state.laser || 1;
+      cargo = state.cargo || 1;
+      ship.x = state.ship?.x || 110;
+      ship.y = state.ship?.y || 270;
+      ship.hp = state.ship?.hp || 100;
+      ship.maxHp = state.ship?.maxHp || 100;
+      boss = state.boss ? { ...state.boss } : null;
+      bossSpawned = Boolean(state.bossSpawned);
+      bossDefeated = Boolean(state.bossDefeated);
+      missileBought = Boolean(state.missileBought);
+      blackholeBought = Boolean(state.blackholeBought);
+      shieldBought = Boolean(state.shieldBought);
+      mouseDriveBought = Boolean(state.mouseDriveBought);
+      mouseDrive = Boolean(state.mouseDrive);
+      reincarnations = state.reincarnations || 0;
+      dimensionUnlocked = Boolean(state.dimensionUnlocked);
+      nextLifeReady = Boolean(state.nextLifeReady);
+      nextLifeCounter = state.nextLifeCounter || 3;
+      dimensionPower = state.dimensionPower || 0;
+      permanentInvulnerable = Boolean(state.permanentInvulnerable);
+      nextCannonOre = state.nextCannonOre || 10000;
+      minigameUnlocked = Boolean(state.minigameUnlocked);
+      researchPoints = state.researchPoints || 0;
+      techLevel = state.techLevel || 0;
+      capitalDefeated = Boolean(state.capitalDefeated);
+      capitalTechLevel = state.capitalTechLevel || 0;
+      capitalShield = state.capitalShield || 0;
+      bridgeLockBroken = Boolean(state.bridgeLockBroken);
+      capitalSections = state.capitalSections || [];
+      capitalShip = state.capitalShip ? { ...state.capitalShip } : null;
+      miningDrones = Array.from({ length: state.miningDroneCount || 0 }, () => ({ x: ship.x, y: ship.y, target: null, phase: Math.random() * Math.PI * 2 }));
+      minigameFrozen = false;
+      document.getElementById("minigame-popup").classList.remove("visible");
+      rocks = [];
+      researchPickups = [];
+      shots = [];
+      drones = [];
+      droneShots = [];
+      fragments = [];
+      particles = [];
+      dead = false;
+      deathPopup.classList.remove("visible");
+      updateHud();
+      effects.push({ type: "flash", ttl: 18 });
+      beep(740, .12, "triangle", .08);
+    }
+
+    function resetRun() {
+      localStorage.removeItem(saveKey);
+      ore = 0;
+      score = 0;
+      drill = 1;
+      laser = 1;
+      cargo = 1;
+      ship.x = 110;
+      ship.y = 270;
+      ship.hp = 100;
+      ship.maxHp = 100;
+      ship.invuln = 0;
+      boss = null;
+      bossSpawned = false;
+      bossDefeated = false;
+      missileBought = false;
+      blackholeBought = false;
+      shieldBought = false;
+      mouseDriveBought = false;
+      mouseDrive = false;
+      reincarnations = 0;
+      dimensionUnlocked = false;
+      nextLifeReady = false;
+      nextLifeCounter = 3;
+      dimensionPower = 0;
+      permanentInvulnerable = false;
+      cannonBeamTimer = 0;
+      nextCannonOre = 10000;
+      minigameFrozen = false;
+      minigameUnlocked = false;
+      researchPoints = 0;
+      techLevel = 0;
+      capitalShip = null;
+      capitalDefeated = false;
+      capitalSections = [];
+      capitalShield = 0;
+      capitalShockwaves = [];
+      miningDrones = [];
+      capitalTechLevel = 0;
+      bridgeLockBroken = false;
+      rocks = [];
+      researchPickups = [];
+      shots = [];
+      drones = [];
+      droneShots = [];
+      fragments = [];
+      particles = [];
+      dead = false;
+      deathPopup.classList.remove("visible");
+      updateHud();
+      beep(220, .12, "square", .08);
+    }
+
+    function spawnRock() {
+      const massive = versusMode && Math.random() < .16;
+      const size = massive ? 58 + Math.random() * 34 : 8 + Math.random() * 31;
+      const colors = ["#76665a", "#5a6476", "#7b5546", "#456f73", "#8b7b58"];
+      const mineralRoll = Math.random();
+      const mineral = massive ? "research" : (mineralRoll < .12 ? "speed" : mineralRoll < .24 ? "damage" : mineralRoll < .34 ? "research" : "");
+      const fromLeft = versusMode && Math.random() < .5;
+      const vertices = 7 + Math.floor(Math.random() * 6);
+      const shape = Array.from({ length: vertices }, (_, index) => ({
+        angle: (Math.PI * 2 * index) / vertices,
+        radius: .7 + Math.random() * .38
+      }));
+      rocks.push({
+        x: fromLeft ? -size : canvas.width + size,
+        y: 40 + Math.random() * (canvas.height - 80),
+        size,
+        hp: massive ? 80 : Math.ceil(size / 11),
+        maxHp: massive ? 80 : Math.ceil(size / 11),
+        vx: (fromLeft ? 1 : -1) * (massive ? .38 + Math.random() * .3 : 1.4 + Math.random() * 2.7),
+        color: colors[Math.floor(Math.random() * colors.length)],
+        spin: Math.random() * Math.PI,
+        spinSpeed: (Math.random() - .5) * .025,
+        shape,
+        massive,
+        mineral,
+        whooshed: false
+      });
+    }
+
+    function spawnDrone() {
+      drones.push({
+        x: canvas.width + 50,
+        y: 55 + Math.random() * (canvas.height - 110),
+        hp: 4,
+        maxHp: 4,
+        vx: 1.4 + Math.random() * 1.2,
+        fireAt: frame + 100 + Math.random() * 110,
+        amp: 40 + Math.random() * 65,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+
+    function spawnBoss() {
+      bossSpawned = true;
+      boss = { x: canvas.width - 120, y: canvas.height / 2, hp: 10000, maxHp: 10000, fireAt: 0, dir: 1 };
+      updateHud();
+    }
+
+    function spawnCapitalShip() {
+      capitalShip = { x: 760, y: 270, shockAt: frame + 240 };
+      capitalDefeated = false;
+      capitalShield = 12000;
+      bridgeLockBroken = false;
+      capitalTechLevel = 0;
+      permanentInvulnerable = false;
+      ship.maxHp = Math.max(ship.maxHp, 500);
+      ship.hp = ship.maxHp;
+      capitalSections = [
+        { id: "engine", name: "ENGINE", x: 650, y: 238, w: 70, h: 64, hp: 4800, maxHp: 4800, adjacent: ["turbine"] },
+        { id: "turbine", name: "TURBINE", x: 715, y: 190, w: 76, h: 54, hp: 4200, maxHp: 4200, adjacent: ["engine", "power", "deck"] },
+        { id: "power", name: "POWER", x: 715, y: 296, w: 76, h: 54, hp: 4400, maxHp: 4400, adjacent: ["engine", "turbine", "deck"] },
+        { id: "deck", name: "DECK", x: 790, y: 220, w: 86, h: 100, hp: 6000, maxHp: 6000, adjacent: ["turbine", "power", "weapons", "bridge"] },
+        { id: "weapons", name: "WEAPONS", x: 870, y: 235, w: 62, h: 70, hp: 5200, maxHp: 5200, adjacent: ["deck", "bridge"] },
+        { id: "bridge", name: "BRIDGE", x: 815, y: 170, w: 66, h: 48, hp: 7000, maxHp: 7000, adjacent: ["deck", "weapons"], bridge: true }
+      ];
+      rocks = [];
+      shots = [];
+      capitalShockwaves = [];
+      researchPoints = Math.max(researchPoints, 7000);
+      renderTechTree();
+      effects.push({ type: "flash", ttl: 70 });
+      beep(44, .8, "sawtooth", .16);
+      updateHud();
+    }
+
+    function resetCapitalShip() {
+      if (!capitalShip) return;
+      capitalShield = 12000;
+      bridgeLockBroken = false;
+      capitalSections.forEach(part => { part.hp = part.maxHp; });
+      capitalShockwaves = [];
+      ship.hp = ship.maxHp;
+      ship.x = 110;
+      ship.y = 270;
+      ship.invuln = 180;
+      effects.push({ type: "flash", ttl: 50 });
+      beep(70, .45, "sawtooth", .12);
+      updateHud();
+    }
+
+    function damageCapitalSection(part, amount) {
+      if (!capitalShip || capitalShield > 0 || part.hp <= 0) return;
+      if (part.bridge && (!bridgeLockBroken || capitalSections.some(item => !item.bridge && item.hp > 0))) return;
+      part.hp = Math.max(0, part.hp - amount);
+      researchPoints += amount * .35;
+      score += Math.floor(amount);
+      if (part.hp <= 0) {
+        explodeAt(part.x + part.w / 2, part.y + part.h / 2);
+        researchPoints += 1500;
+        if (part.bridge) {
+          capitalDefeated = true;
+          capitalShip = null;
+          capitalShockwaves = [];
+          score += 1000000;
+          bossDefeated = true;
+          finishGame();
+        }
+      }
+      updateHud();
+    }
+
+    function deployMiningDrone() {
+      if (!capitalShip || score < 1000000 || miningDrones.length >= 14) return;
+      score -= 1000000;
+      miningDrones.push({ x: ship.x, y: ship.y, target: null, phase: Math.random() * Math.PI * 2 });
+      beep(760, .12, "square", .08);
+      updateHud();
+    }
+
+    function useCapitalAttack() {
+      if (!capitalShip || capitalTechLevel < 1) return;
+      if (capitalShield <= 0) {
+        const targets = capitalSections.filter(part => part.hp > 0 && !part.bridge);
+        targets.slice(0, capitalTechLevel >= 2 ? 3 : 1).forEach(part => damageCapitalSection(part, capitalTechLevel >= 2 ? 850 : 600));
+      }
+      effects.push({ type: "flash", ttl: 18 });
+      beep(125, .28, "sawtooth", .13);
+      updateHud();
+    }
+
+    function startRadar() {
+      if (!capitalShip || capitalTechLevel < 3 || bridgeLockBroken) return;
+      radarActive = true;
+      minigameFrozen = true;
+      radarCursor = { x: 260, y: 260 };
+      radarTarget = { x: 50 + Math.random() * 420, y: 50 + Math.random() * 420 };
+      radarPopup.classList.add("visible");
+      drawRadar();
+    }
+
+    function moveRadar(x, y) {
+      radarCursor.x = Math.max(15, Math.min(505, x));
+      radarCursor.y = Math.max(15, Math.min(505, y));
+      const distance = Math.hypot(radarCursor.x - radarTarget.x, radarCursor.y - radarTarget.y);
+      if (distance < 24) {
+        radarActive = false;
+        bridgeLockBroken = true;
+        minigameFrozen = false;
+        radarPopup.classList.remove("visible");
+        beep(1200, .4, "triangle", .13);
+      }
+      drawRadar();
+    }
+
+    function drawRadar() {
+      if (!radarActive) return;
+      radarAngle += .035;
+      radarCtx.fillStyle = "rgba(0,12,5,.28)";
+      radarCtx.fillRect(0, 0, 520, 520);
+      radarCtx.strokeStyle = "#35ff65";
+      radarCtx.lineWidth = 2;
+      [90, 170, 250].forEach(radius => {
+        radarCtx.beginPath();
+        radarCtx.arc(260, 260, radius, 0, Math.PI * 2);
+        radarCtx.stroke();
+      });
+      radarCtx.beginPath();
+      radarCtx.moveTo(260, 260);
+      radarCtx.lineTo(260 + Math.cos(radarAngle) * 250, 260 + Math.sin(radarAngle) * 250);
+      radarCtx.stroke();
+      const targetAngle = Math.atan2(radarTarget.y - 260, radarTarget.x - 260);
+      const scanDifference = Math.abs(Math.atan2(Math.sin(radarAngle - targetAngle), Math.cos(radarAngle - targetAngle)));
+      if (scanDifference < .12) {
+        radarCtx.fillStyle = "#ff3344";
+        radarCtx.beginPath();
+        radarCtx.arc(radarTarget.x, radarTarget.y, 7, 0, Math.PI * 2);
+        radarCtx.fill();
+      }
+      radarCtx.strokeStyle = "#fff";
+      radarCtx.strokeRect(radarCursor.x - 12, radarCursor.y - 12, 24, 24);
+      const distance = Math.hypot(radarCursor.x - radarTarget.x, radarCursor.y - radarTarget.y);
+      const interval = Math.max(7, Math.floor(distance / 8));
+      radarLastBeep += 1;
+      if (radarLastBeep > interval) {
+        radarLastBeep = 0;
+        beep(220 + Math.max(0, 500 - distance), .04, "square", .05);
+      }
+      requestAnimationFrame(drawRadar);
+    }
+
+    function fire(quiet = false) {
+      shots.push({ x: ship.x + 28, y: ship.y, vx: 8 + laser * 2 });
+      if (!quiet) beep(520, .04, "square", .05);
+    }
+
+    function damagePlayer(amount) {
+      if (permanentInvulnerable || shieldTimer > 0 || ship.invuln > 0 || finished) return;
+      ship.hp = Math.max(0, ship.hp - amount);
+      ship.invuln = 45;
+      if (ship.hp <= 0) {
+        if (capitalShip) {
+          resetCapitalShip();
+          return;
+        }
+        if (versusMode) {
+          rivalDeaths += 1;
+          rivalLevel += 1;
+          rival.speed += .3;
+          if (rivalDeaths >= versusWinTarget) {
+            endVersus(false);
+            return;
+          }
+          ship.hp = ship.maxHp;
+          ship.x = 110;
+          ship.y = 270;
+          ship.invuln = 150;
+          score += 120000;
+          updateHud();
+          return;
+        }
+        dead = true;
+        deathPopup.classList.add("visible");
+        reviveNote.textContent = `Reincarnation bonus next: ${((reincarnations + 1) * 100000).toLocaleString()} score`;
+      }
+      updateHud();
+    }
+
+    function startVersus() {
+      versusMode = true;
+      versusResult = "";
+      score = 0;
+      ore = 0;
+      playerRaceDeaths = 0;
+      permanentInvulnerable = false;
+      rivalScore = 0;
+      rivalDeaths = 0;
+      rivalLevel = 1;
+      researchPoints = 150;
+      techLevel = 0;
+      rivalResearch = 150;
+      rivalTechLevel = 0;
+      rivalShieldTimer = 0;
+      rivalBlackholeTimer = 0;
+      rivalMissileCooldown = 0;
+      rivalLastPlayerHitFrame = -9999;
+      rivalRespawnTimer = 0;
+      rival = { x: canvas.width - 110, y: 270, hp: 520, maxHp: 520, speed: 1.55, fireAt: 0, invuln: 180 };
+      rivalShots = [];
+      rocks = [];
+      researchPickups = [];
+      drones = [];
+      droneShots = [];
+      fragments = [];
+      particles = [];
+      boss = null;
+      bossSpawned = true;
+      bossDefeated = false;
+      ship.hp = 300;
+      ship.maxHp = 300;
+      ship.x = 110;
+      ship.y = 270;
+      ship.invuln = 240;
+      nextCannonOre = 10000;
+      cannonBeamTimer = 0;
+      renderTechTree();
+      updateHud();
+      beep(420, .28, "sawtooth", .1);
+    }
+
+    function damageRival(amount, killedByPlayerWeapon = false) {
+      if (!versusMode || !rival || rival.invuln > 0 || rivalRespawnTimer > 0) return;
+      if (killedByPlayerWeapon) rivalLastPlayerHitFrame = frame;
+      const techDamageMultiplier = 1 + (techLevel >= 1 ? .25 : 0);
+      const shieldMultiplier = rivalShieldTimer > 0 ? .45 : 1;
+      const dealt = Math.max(1, Math.floor(amount * .34 * techDamageMultiplier * shieldMultiplier));
+      rival.hp -= dealt;
+      if (killedByPlayerWeapon) {
+        researchPoints += dealt * (techLevel >= 6 ? 4 : 1.6);
+      }
+      if (rival.hp <= 0) {
+        if (!killedByPlayerWeapon && frame - rivalLastPlayerHitFrame <= 300) {
+          killedByPlayerWeapon = true;
+        }
+        if (!killedByPlayerWeapon) {
+          rivalDeaths += 1;
+          rivalLevel += 1;
+          rival.speed += .35;
+          rival.hp = rival.maxHp;
+          rivalLastPlayerHitFrame = -9999;
+          rival.invuln = 130;
+          rivalRespawnTimer = 50;
+          rival.x = canvas.width - 110;
+          rival.y = 270;
+          if (rivalDeaths >= versusWinTarget) endVersus(false);
+          return;
+        }
+        playerRaceDeaths += 1;
+        score += 250000;
+        researchPoints += techLevel >= 6 ? 1200 : 450;
+        rivalLevel = 1;
+        rivalDeaths = 0;
+        rivalScore = 0;
+        rival.hp = rival.maxHp;
+        rivalLastPlayerHitFrame = -9999;
+        rival.speed = 1.7;
+        rival.invuln = 150;
+        rivalRespawnTimer = 65;
+        rival.x = canvas.width - 110;
+        rival.y = 270;
+        if (playerRaceDeaths >= versusWinTarget) {
+          permanentInvulnerable = true;
+          endVersus(true);
+          return;
+        }
+      }
+      renderTechTree();
+    }
+
+    function endVersus(playerWon) {
+      versusMode = false;
+      versusResult = playerWon ? "win" : "loss";
+      minigameFrozen = true;
+      const title = document.getElementById("minigame-title");
+      const message = document.getElementById("minigame-message");
+      title.textContent = playerWon ? "IMMORTALITY ACHIEVED" : "RIVAL REACHED IMMORTALITY";
+      message.textContent = playerWon
+        ? "You won the immortality race. The enemy capital ship has entered the sector."
+        : "The rival evolved first. Close this screen to restart the match.";
+      document.getElementById("close-minigame").textContent = playerWon ? "ENGAGE CAPITAL SHIP" : "RESTART MATCH";
+      document.getElementById("minigame-popup").classList.add("visible");
+      beep(playerWon ? 980 : 90, .5, playerWon ? "triangle" : "sawtooth", .13);
+    }
+
+    function revivePlayer() {
+      reincarnations += 1;
+      const bonus = reincarnations * 100000;
+      score += bonus;
+      ship.hp = 100;
+      ship.x = 110;
+      ship.y = 270;
+      ship.invuln = 180;
+      shieldTimer = Math.max(shieldTimer, 180);
+      dead = false;
+      deathPopup.classList.remove("visible");
+      if (reincarnations >= 3 && !dimensionUnlocked) unlockDimension();
+      beep(900, .18, "triangle", .1);
+      updateHud();
+    }
+
+    function unlockDimension() {
+      dimensionUnlocked = true;
+      nextLifeReady = true;
+      nextLifeCounter = 3;
+      dimensionPower = 1;
+      rocks = [];
+      researchPickups = [];
+      drones = [];
+      droneShots = [];
+      fragments = [];
+      particles = [];
+      shots = [];
+      boss = null;
+      bossSpawned = false;
+      ship.hp = 100;
+      ship.x = 110;
+      ship.y = 270;
+      shieldTimer = 180;
+      effects.push({ type: "flash", ttl: 80 });
+    }
+
+    function useNextLife() {
+      if (!dimensionUnlocked || !nextLifeReady) return;
+      nextLifeReady = false;
+      nextLifePrompt = true;
+      shakeTimer = 160;
+      rocks = [];
+      researchPickups = [];
+      drones = [];
+      droneShots = [];
+      fragments = [];
+      particles = [];
+      shots = [];
+      missileCooldown = 0;
+      blackholeCooldown = 0;
+      shieldCooldown = 0;
+      blackholeTimer = 600;
+      shieldTimer = 1500;
+      effects.push({ type: "flash", ttl: 140 });
+      if (boss) damageBoss(1200, .5);
+      ore += 5000;
+      score += 10000;
+      dimensionPower += 1;
+      beep(70, .5, "sawtooth", .12);
+    }
+
+    function unlockNextLifeClick() {
+      if (!nextLifePrompt) return false;
+      nextLifePrompt = false;
+      nextLifeCounter = Math.min(5, nextLifeCounter + 1);
+      nextLifeReady = nextLifeCounter < 5;
+      if (nextLifeCounter >= 5) {
+        permanentInvulnerable = true;
+        minigameUnlocked = true;
+        shieldTimer = 0;
+        effects.push({ type: "flash", ttl: 120 });
+        beep(1100, .32, "triangle", .12);
+      }
+      ship.hp = 100;
+      ship.invuln = 240;
+      shieldTimer = Math.max(shieldTimer, 240);
+      score += 250000;
+      ore += 100000;
+      updateHud();
+      return true;
+    }
+
+    function mineRock(rock, index) {
+      const massiveMultiplier = rock.massive && versusMode ? (techLevel >= 1 ? 5 : .35) : 1;
+      const boostMultiplier = damageBoostTimer > 0 ? 2 : 1;
+      rock.hp -= drill * massiveMultiplier * boostMultiplier;
+      if (rock.hp <= 0) {
+        const gain = Math.floor(rock.size * 4 * cargo);
+        ore += gain;
+        score += gain * 2;
+        spawnFragments(rock.x, rock.y, rock.size, rock.color);
+        spawnRockPickup(rock);
+        rocks.splice(index, 1);
+        beep(rock.massive ? 72 : 190, rock.massive ? .32 : .05, "sawtooth", rock.massive ? .12 : .04);
+        updateHud();
+      }
+    }
+
+    function destroyRock(rock, index) {
+      const gain = Math.floor(rock.size * 3 * cargo);
+      ore += gain;
+      score += gain * 2;
+      spawnFragments(rock.x, rock.y, rock.size, rock.color);
+      spawnRockPickup(rock);
+      rocks.splice(index, 1);
+      beep(150, .04, "sawtooth", .035);
+      updateHud();
+    }
+
+    function spawnRockPickup(rock) {
+      if (!rock.mineral && !rock.massive) return;
+      researchPickups.push({
+        x: rock.x,
+        y: rock.y,
+        type: rock.massive ? "research" : rock.mineral,
+        ttl: 720,
+        phase: Math.random() * Math.PI * 2,
+        value: rock.massive ? Math.max(120, Math.floor(researchPoints * .2)) : 80
+      });
+    }
+
+    function collectPickup(pickup) {
+      if (pickup.type === "research") {
+        researchPoints += pickup.value;
+        beep(1080, .18, "triangle", .09);
+      }
+      if (pickup.type === "speed") {
+        speedBoostTimer = 600;
+        beep(840, .14, "square", .08);
+      }
+      if (pickup.type === "damage") {
+        damageBoostTimer = 600;
+        beep(420, .16, "sawtooth", .08);
+      }
+      renderTechTree();
+    }
+
+    function spawnFragments(x, y, size, color) {
+      const count = Math.min(9, Math.max(3, Math.floor(size / 4)));
+      for (let i = 0; i < count; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        fragments.push({
+          x,
+          y,
+          vx: Math.cos(angle) * (1.2 + Math.random() * 2.8),
+          vy: Math.sin(angle) * (1.2 + Math.random() * 2.8),
+          size: 3 + Math.random() * 5,
+          ttl: 220,
+          color
+        });
+      }
+      spawnSnow(x, y, 18);
+    }
+
+    function spawnSnow(x, y, count = 12) {
+      for (let i = 0; i < count; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * (1 + Math.random() * 2),
+          vy: Math.sin(angle) * (1 + Math.random() * 2),
+          ttl: 45 + Math.random() * 40
+        });
+      }
+    }
+
+    function explodeAt(x, y) {
+      spawnSnow(x, y, 24);
+      effects.push({ type: "flash", ttl: 8 });
+      beep(120, .05, "sawtooth", .035);
+    }
+
+    function fireCannonBeam() {
+      cannonBeamTimer = 60;
+      effects.push({ type: "flash", ttl: 20 });
+      beep(45, .8, "sawtooth", .16);
+      beep(95, .35, "square", .12);
+      for (let i = rocks.length - 1; i >= 0; i -= 1) {
+        if (rocks[i].x > canvas.width - 170) destroyRock(rocks[i], i);
+      }
+      drones.forEach(drone => {
+        if (drone.x > canvas.width - 190) drone.hp = 0;
+      });
+      if (boss) damageBoss(900, .18);
+    }
+
+    function damageBoss(amount, critChance = 0) {
+      if (!boss) return;
+      const critical = Math.random() < critChance;
+      boss.hp -= critical ? amount * 3 : amount;
+      score += critical ? amount * 3 : amount;
+      if (boss.hp <= 0) {
+        bossDefeated = true;
+        boss = null;
+        score += 25000;
+        beep(90, .45, "sawtooth", .1);
+      }
+      updateHud();
+    }
+
+    function useMissile() {
+      if (!missileBought) {
+        if (ore < 450) return;
+        ore -= 450;
+        missileBought = true;
+      }
+      if (missileCooldown > 0) return;
+      for (let i = rocks.length - 1; i >= 0; i -= 1) {
+        if (!rocks[i].massive || !versusMode || techLevel >= 1) destroyRock(rocks[i], i);
+      }
+      drones = [];
+      damageBoss(350, .35);
+      if (versusMode && rival && techLevel >= 3) damageRival(110, true);
+      effects.push({ type: "flash", ttl: 20 });
+      missileCooldown = 420;
+      beep(95, .22, "sawtooth", .12);
+      updateHud();
+    }
+
+    function useBlackhole() {
+      if (!blackholeBought) {
+        if (ore < 800) return;
+        ore -= 800;
+        blackholeBought = true;
+      }
+      if (blackholeCooldown > 0) return;
+      blackholeTimer = 240;
+      damageBoss(650, .22);
+      if (capitalShip) {
+        capitalShield = Math.max(0, capitalShield - 3000);
+        researchPoints += 500;
+        effects.push({ type: "flash", ttl: 22 });
+      }
+      if (versusMode && rival && techLevel >= 4) {
+        damageRival(160, true);
+        rival.x += (canvas.width / 2 - rival.x) * .45;
+        rival.y += (canvas.height / 2 - rival.y) * .45;
+      }
+      blackholeCooldown = 720;
+      beep(60, .35, "sine", .14);
+      updateHud();
+    }
+
+    function useShield() {
+      if (!shieldBought) {
+        if (ore < 600) return;
+        ore -= 600;
+        shieldBought = true;
+      }
+      if (shieldCooldown > 0) return;
+      shieldTimer = 1500;
+      shieldCooldown = 1800;
+      beep(740, .18, "triangle", .08);
+      updateHud();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      if (shakeTimer > 0) {
+        ctx.translate((Math.random() - .5) * 18, (Math.random() - .5) * 18);
+      }
+      ctx.fillStyle = "#050716";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#fff";
+      for (let i = 0; i < 70; i += 1) {
+        const x = (i * 137 + frame * .35) % canvas.width;
+        const y = (i * 67) % canvas.height;
+        ctx.fillRect(x, y, 2, 2);
+      }
+
+      if (blackholeTimer > 0) {
+        ctx.fillStyle = "rgba(0,0,0,.58)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#160030";
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2, 72 + Math.sin(frame / 8) * 9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#8c2bff";
+        ctx.lineWidth = 8;
+        ctx.stroke();
+      }
+      if (versusMode && rivalBlackholeTimer > 0 && rival) {
+        ctx.fillStyle = "rgba(80,0,90,.36)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#3d003d";
+        ctx.beginPath();
+        ctx.arc(rival.x - 90, rival.y, 58 + Math.sin(frame / 7) * 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#ff4fd8";
+        ctx.lineWidth = 7;
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = ship.invuln > 0 ? "#aef3ff" : "#37d5ff";
+      ctx.beginPath();
+      ctx.moveTo(ship.x + 34, ship.y);
+      ctx.lineTo(ship.x - 22, ship.y - 22);
+      ctx.lineTo(ship.x - 12, ship.y);
+      ctx.lineTo(ship.x - 22, ship.y + 22);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#ffe600";
+      ctx.fillRect(ship.x - 8, ship.y - 6, 20, 12);
+      if (shieldTimer > 0) {
+        ctx.strokeStyle = "#2dc8ff";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(ship.x, ship.y, 42, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      if (versusMode && rival) {
+        ctx.fillStyle = rival.invuln > 0 ? "#ffb0b8" : "#ff3b4f";
+        ctx.beginPath();
+        ctx.moveTo(rival.x - 34, rival.y);
+        ctx.lineTo(rival.x + 22, rival.y - 22);
+        ctx.lineTo(rival.x + 12, rival.y);
+        ctx.lineTo(rival.x + 22, rival.y + 22);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#ffe600";
+        ctx.fillRect(rival.x - 12, rival.y - 6, 20, 12);
+        ctx.fillStyle = "#000";
+        ctx.fillRect(rival.x - 58, rival.y - 38, 116, 9);
+        ctx.fillStyle = "#ff3b4f";
+        ctx.fillRect(rival.x - 58, rival.y - 38, 116 * Math.max(0, rival.hp / rival.maxHp), 9);
+        ctx.strokeStyle = "#fff";
+        ctx.strokeRect(rival.x - 58, rival.y - 38, 116, 9);
+        if (rivalShieldTimer > 0) {
+          ctx.strokeStyle = "#ff4fd8";
+          ctx.lineWidth = 5;
+          ctx.beginPath();
+          ctx.arc(rival.x, rival.y, 42, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+
+      ctx.fillStyle = "#ffe600";
+      shots.forEach(shot => ctx.fillRect(shot.x, shot.y - 3, 18, 6));
+
+      ctx.fillStyle = "#ff3b4f";
+      droneShots.forEach(shot => ctx.fillRect(shot.x, shot.y - 3, 14, 6));
+      ctx.fillStyle = "#ff8a9a";
+      rivalShots.forEach(shot => ctx.fillRect(shot.x, shot.y - 3, 18, 6));
+
+      fragments.forEach(piece => {
+        ctx.fillStyle = piece.color;
+        ctx.beginPath();
+        ctx.arc(piece.x, piece.y, piece.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      particles.forEach(particle => {
+        ctx.fillStyle = "rgba(235,248,255,.78)";
+        ctx.fillRect(particle.x, particle.y, 2, 2);
+      });
+
+      rocks.forEach(rock => {
+        ctx.fillStyle = rock.color;
+        ctx.beginPath();
+        rock.shape.forEach((point, index) => {
+          const angle = point.angle + rock.spin;
+          const x = rock.x + Math.cos(angle) * rock.size * point.radius;
+          const y = rock.y + Math.sin(angle) * rock.size * point.radius;
+          if (index === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "#d6c1a5";
+        ctx.lineWidth = rock.massive ? 4 : 2;
+        ctx.stroke();
+        if (rock.mineral) {
+          const mineralColor = rock.mineral === "speed" ? "#35e8ff" : rock.mineral === "damage" ? "#ff3b4f" : "#d85cff";
+          ctx.strokeStyle = mineralColor;
+          ctx.lineWidth = rock.massive ? 7 : 4;
+          ctx.beginPath();
+          ctx.moveTo(rock.x - rock.size * .55, rock.y + rock.size * .2);
+          ctx.lineTo(rock.x - rock.size * .12, rock.y - rock.size * .24);
+          ctx.lineTo(rock.x + rock.size * .18, rock.y + rock.size * .15);
+          ctx.lineTo(rock.x + rock.size * .58, rock.y - rock.size * .28);
+          ctx.stroke();
+        }
+        if (rock.massive) {
+          ctx.fillStyle = "#fff";
+          ctx.font = "900 11px Arial";
+          ctx.fillText(`RP ${Math.ceil(rock.hp)}/${rock.maxHp}`, rock.x - 34, rock.y - rock.size - 8);
+        }
+      });
+
+      researchPickups.forEach(pickup => {
+        const pulse = 12 + Math.sin(frame / 8 + pickup.phase) * 4;
+        const hue = (frame * 5 + pickup.phase * 80) % 360;
+        ctx.fillStyle = `hsla(${hue}, 100%, 60%, .9)`;
+        ctx.beginPath();
+        ctx.arc(pickup.x, pickup.y, pulse, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = "#000";
+        ctx.font = "900 10px Arial";
+        ctx.fillText(pickup.type === "research" ? "RP" : pickup.type === "speed" ? "SPD" : "DMG", pickup.x - 10, pickup.y + 3);
+      });
+
+      drones.forEach(drone => {
+        ctx.fillStyle = "#ff3b4f";
+        ctx.fillRect(drone.x - 18, drone.y - 13, 36, 26);
+        ctx.fillStyle = "#ffe600";
+        ctx.fillRect(drone.x - 5, drone.y - 5, 10, 10);
+        ctx.fillStyle = "#000";
+        ctx.fillRect(drone.x - 22, drone.y - 25, 44, 6);
+        ctx.fillStyle = "#ff1d25";
+        ctx.fillRect(drone.x - 22, drone.y - 25, 44 * Math.max(0, drone.hp / drone.maxHp), 6);
+        ctx.strokeStyle = "#fff";
+        ctx.strokeRect(drone.x - 22, drone.y - 25, 44, 6);
+      });
+
+      if (boss) {
+        ctx.fillStyle = "#2a0012";
+        ctx.fillRect(boss.x - 56, boss.y - 58, 112, 116);
+        ctx.fillStyle = "#ff3b4f";
+        ctx.fillRect(boss.x - 40, boss.y - 28, 80, 56);
+        ctx.fillStyle = "#ffe600";
+        ctx.fillRect(boss.x - 22, boss.y - 8, 44, 16);
+        ctx.fillStyle = "#000";
+        ctx.fillRect(boss.x - 70, boss.y - 86, 140, 13);
+        ctx.fillStyle = "#ff1d25";
+        ctx.fillRect(boss.x - 70, boss.y - 86, 140 * Math.max(0, boss.hp / boss.maxHp), 13);
+        ctx.strokeStyle = "#fff";
+        ctx.strokeRect(boss.x - 70, boss.y - 86, 140, 13);
+      }
+
+      if (capitalShip) {
+        ctx.fillStyle = "#e8edf2";
+        ctx.beginPath();
+        ctx.moveTo(635, 270);
+        ctx.lineTo(740, 150);
+        ctx.lineTo(925, 205);
+        ctx.lineTo(950, 270);
+        ctx.lineTo(925, 335);
+        ctx.lineTo(740, 390);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "#7f94a8";
+        ctx.lineWidth = 5;
+        ctx.stroke();
+        capitalSections.forEach(part => {
+          ctx.fillStyle = part.hp <= 0 ? "#2a2020" : part.bridge ? "#dbefff" : "#aebdca";
+          ctx.fillRect(part.x, part.y, part.w, part.h);
+          ctx.strokeStyle = "#223344";
+          ctx.strokeRect(part.x, part.y, part.w, part.h);
+          ctx.fillStyle = "#000";
+          ctx.fillRect(part.x, part.y - 13, part.w, 8);
+          ctx.fillStyle = part.hp <= 0 ? "#ff5b21" : "#35ff65";
+          ctx.fillRect(part.x, part.y - 13, part.w * Math.max(0, part.hp / part.maxHp), 8);
+          ctx.fillStyle = "#000";
+          ctx.font = "900 9px Arial";
+          ctx.fillText(part.name, part.x + 3, part.y + 13);
+          if (part.hp <= 0) {
+            ctx.fillStyle = frame % 12 < 6 ? "#ff3b21" : "#ffe600";
+            ctx.beginPath();
+            ctx.arc(part.x + part.w / 2, part.y + part.h / 2, 10 + Math.random() * 8, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+        if (capitalShield > 0) {
+          ctx.strokeStyle = "rgba(90,220,255,.85)";
+          ctx.lineWidth = 8;
+          ctx.beginPath();
+          ctx.ellipse(795, 270, 175, 145, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = "#b7fffb";
+          ctx.font = "900 14px Arial";
+          ctx.fillText(`BLACK HOLE SHIELD ${Math.ceil(capitalShield)}`, 690, 135);
+        } else if (!bridgeLockBroken) {
+          ctx.fillStyle = "#ff6677";
+          ctx.font = "900 14px Arial";
+          ctx.fillText("BRIDGE LOCKED: COMPLETE RADAR", 700, 135);
+        }
+      }
+
+      miningDrones.forEach(drone => {
+        ctx.fillStyle = "#35ff65";
+        ctx.beginPath();
+        ctx.arc(drone.x, drone.y, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#fff";
+        ctx.stroke();
+      });
+      if (touchGuide) {
+        ctx.save();
+        ctx.globalAlpha = .42;
+        ctx.strokeStyle = "#b7fffb";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+        ctx.moveTo(touchGuide.x, touchGuide.y);
+        ctx.lineTo(ship.x, ship.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "#37d5ff";
+        ctx.beginPath();
+        ctx.moveTo(touchGuide.x + 20, touchGuide.y);
+        ctx.lineTo(touchGuide.x - 13, touchGuide.y - 13);
+        ctx.lineTo(touchGuide.x - 7, touchGuide.y);
+        ctx.lineTo(touchGuide.x - 13, touchGuide.y + 13);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+      capitalShockwaves.forEach(wave => {
+        ctx.fillStyle = "#ff75e6";
+        ctx.beginPath();
+        ctx.arc(wave.x, wave.y, wave.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      if (permanentInvulnerable) {
+        ctx.fillStyle = "#5b463a";
+        ctx.beginPath();
+        ctx.arc(canvas.width - 70, canvas.height - 54, 38, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#d6c1a5";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        ctx.fillStyle = "#0b0b0b";
+        ctx.fillRect(canvas.width - 98, canvas.height - 86, 20, 56);
+        ctx.fillStyle = "#ffe600";
+        ctx.fillText("▲", canvas.width - 96, canvas.height - 88);
+      }
+
+      if (cannonBeamTimer > 0) {
+        const alpha = Math.min(1, cannonBeamTimer / 18);
+        ctx.fillStyle = `rgba(255, 230, 0, ${.24 + alpha * .45})`;
+        ctx.beginPath();
+        ctx.moveTo(canvas.width - 82, canvas.height - 86);
+        ctx.lineTo(canvas.width - 132, 0);
+        ctx.lineTo(canvas.width - 28, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+        ctx.lineWidth = 9;
+        ctx.beginPath();
+        ctx.moveTo(canvas.width - 70, canvas.height - 86);
+        ctx.lineTo(canvas.width - 70, 0);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "#000";
+      ctx.fillRect(18, 18, 170, 14);
+      ctx.fillStyle = "#35ff65";
+        ctx.fillRect(18, 18, 170 * Math.max(0, ship.hp / ship.maxHp), 14);
+      ctx.strokeStyle = "#fff";
+      ctx.strokeRect(18, 18, 170, 14);
+      ctx.fillStyle = "#fff";
+      ctx.font = "900 14px Malgun Gothic, Arial";
+      ctx.fillText(`${ship.hp}/${ship.maxHp}`, 68, 31);
+      if (dimensionUnlocked) {
+        ctx.font = "900 30px Malgun Gothic, Arial";
+        ctx.fillStyle = "#b7fffb";
+        ctx.fillText(`차원력 ${dimensionPower}  환생 ${nextLifeCounter}/5`, 18, 70);
+        ctx.font = "900 14px Malgun Gothic, Arial";
+        ctx.fillStyle = "#ffe600";
+        ctx.fillText("Thank you for your reincarnation. You become stronger.", 18, 92);
+        if (permanentInvulnerable) {
+          ctx.fillStyle = "#35ff65";
+          ctx.fillText("PERMANENT INVULNERABILITY · cannon fires every 10,000 meteor ore", 18, 112);
+        }
+      }
+      if (versusMode) {
+        ctx.fillStyle = "rgba(0,0,0,.76)";
+        ctx.fillRect(250, 118, 460, 48);
+        ctx.font = "900 18px Malgun Gothic, Arial";
+        ctx.fillStyle = "#35ff65";
+        ctx.fillText(`PLAYER RESURRECTION ${playerRaceDeaths}/${versusWinTarget}`, 268, 148);
+        ctx.fillStyle = "#ff3b4f";
+        ctx.fillText(`RIVAL RESURRECTION ${rivalDeaths}/${versusWinTarget}  LV.${rivalLevel}`, 500, 148);
+        ctx.font = "900 13px Malgun Gothic, Arial";
+        ctx.fillStyle = "#b7fffb";
+        ctx.fillText(`RP ${Math.floor(researchPoints)} · TECH ${techLevel}/6`, 268, 164);
+        ctx.fillStyle = "#ff9f9f";
+        ctx.fillText(`RIVAL RP ${Math.floor(rivalResearch)} · TECH ${rivalTechLevel}/6`, 500, 164);
+        ctx.fillStyle = "#ffe600";
+        ctx.fillText(`MASSIVE RP ROCKS: TECH 1 x5 damage`, 268, 181);
+        ctx.fillStyle = "#b7fffb";
+        ctx.fillText(`FAIR RESEARCH: both ships +4.2 RP/sec`, 268, 198);
+        if (speedBoostTimer > 0 || damageBoostTimer > 0) {
+          ctx.fillStyle = "#35ff65";
+          ctx.fillText(`BOOST ${speedBoostTimer > 0 ? `SPD ${Math.ceil(speedBoostTimer / 60)}s ` : ""}${damageBoostTimer > 0 ? `DMG ${Math.ceil(damageBoostTimer / 60)}s` : ""}`, 570, 198);
+        }
+      }
+      if (capitalShip) {
+        ctx.fillStyle = "rgba(0,0,0,.82)";
+        ctx.fillRect(205, 118, 450, 72);
+        ctx.font = "900 15px Malgun Gothic, Arial";
+        ctx.fillStyle = "#b7fffb";
+        ctx.fillText(`CAPITAL RP ${Math.floor(researchPoints).toLocaleString()} · DRONES ${miningDrones.length}/14`, 220, 143);
+        ctx.fillStyle = "#ffe600";
+        ctx.fillText(capitalShield > 0 ? "ONLY BLACK HOLE DAMAGES THE SHIELD" : "TARGET SHIP SECTIONS · DESTROY BRIDGE LAST", 220, 166);
+        ctx.fillStyle = bridgeLockBroken ? "#35ff65" : "#ff9f9f";
+        ctx.fillText(bridgeLockBroken ? "BRIDGE TARGET LOCK BROKEN" : "RESEARCH RADAR TO UNLOCK BRIDGE", 220, 185);
+      }
+      if (nextLifePrompt) {
+        ctx.fillStyle = "rgba(0,0,0,.72)";
+        ctx.fillRect(190, 205, 580, 96);
+        ctx.strokeStyle = "#ffe600";
+        ctx.lineWidth = 4;
+        ctx.strokeRect(190, 205, 580, 96);
+        ctx.font = "900 34px Malgun Gothic, Arial";
+        ctx.fillStyle = "#ffe600";
+        ctx.fillText("CLICK TO UNLOCK YOUR NEXT LIFE", 228, 264);
+      }
+
+      if (effects.some(effect => effect.type === "flash")) {
+        ctx.fillStyle = "rgba(255,230,0,.22)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      ctx.restore();
+      drawCanvasUi();
+    }
+
+    function drawCanvasUi() {
+      ctx.save();
+      ctx.font = "900 18px Malgun Gothic, Arial";
+      ctx.fillStyle = "rgba(0,0,0,.72)";
+      ctx.fillRect(0, 0, canvas.width, 116);
+      ctx.fillStyle = "#ffe600";
+      ctx.fillText(`⛏ ${ore.toLocaleString()}`, 205, 36);
+      ctx.fillStyle = "#fff";
+      ctx.fillText(`★ ${score.toLocaleString()}`, 330, 36);
+      ctx.font = "900 11px Malgun Gothic, Arial";
+      ctx.fillStyle = score >= 1000000 || mouseDriveBought ? "#35ff65" : "#ff9f9f";
+      ctx.fillText(`🖱 unlock score ${Math.min(score, 1000000).toLocaleString()}/1,000,000`, 455, 54);
+
+      abilityButtons = [
+        { kind: "drill", icon: "⛏️", x: 455, y: 10, cost: drill > 1 ? "OK" : "150" },
+        { kind: "laser", icon: "🔫", x: 510, y: 10, cost: laser > 1 ? "OK" : "300" },
+        { kind: "cargo", icon: "📦", x: 565, y: 10, cost: cargo > 1 ? "OK" : "500" },
+        { kind: "missile", icon: "🚀", x: 620, y: 10, cost: missileBought ? (missileCooldown > 0 ? Math.ceil(missileCooldown / 60) : "GO") : "450" },
+        { kind: "blackhole", icon: "⚫", x: 675, y: 10, cost: blackholeBought ? (blackholeCooldown > 0 ? Math.ceil(blackholeCooldown / 60) : "GO") : "800" },
+        { kind: "shield", icon: "🛡️", x: 730, y: 10, cost: shieldBought ? (shieldCooldown > 0 ? Math.ceil(shieldCooldown / 60) : "25s") : "600" },
+        { kind: "mouse", icon: "🖱️", x: 785, y: 10, cost: mouseDriveBought ? (mouseDrive ? "ON" : "OFF") : "1M" },
+        { kind: "nextlife", icon: "🌌", x: 840, y: 10, cost: dimensionUnlocked ? "FREE" : "3D" },
+        { kind: "minigame", icon: "🎮", x: 895, y: 10, cost: score >= 2500000 ? "NEW" : "2.5M" },
+        { kind: "tech", icon: "🧪", x: 675, y: 64, cost: versusMode || capitalShip ? "TECH" : "LOCK" },
+        { kind: "minerdrone", icon: "🤖", x: 730, y: 64, cost: capitalShip ? `${miningDrones.length}/14` : "LOCK" },
+        { kind: "capitalattack", icon: "☄️", x: 785, y: 64, cost: capitalTechLevel ? "FIRE" : "LOCK" },
+        { kind: "radar", icon: "📡", x: 840, y: 64, cost: bridgeLockBroken ? "OK" : "LOCK" },
+        { kind: "save", icon: "💾", x: 455, y: 64, cost: "SAVE" },
+        { kind: "load", icon: "📂", x: 510, y: 64, cost: "LOAD" },
+        { kind: "reset", icon: "🧹", x: 565, y: 64, cost: "RST" },
+        { kind: "finish", icon: "🏁", x: 620, y: 64, cost: capitalDefeated ? "END" : "LOCK" }
+      ];
+
+      abilityButtons.forEach(button => {
+        const ready = canUseAbility(button.kind);
+        ctx.globalAlpha = ready ? 1 : .34;
+        ctx.fillStyle = ready ? "#ffe600" : "#777";
+        ctx.fillRect(button.x, button.y, 44, 40);
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(button.x, button.y, 44, 40);
+        ctx.font = "22px Arial";
+        ctx.fillStyle = "#000";
+        ctx.fillText(button.icon, button.x + 8, button.y + 26);
+        ctx.font = "900 9px Arial";
+        ctx.fillText(String(button.cost), button.x + 4, button.y + 38);
+      });
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
+    function loop() {
+      if (finished) return;
+      if (minigameFrozen) {
+        draw();
+        requestAnimationFrame(loop);
+        return;
+      }
+      if (dead) {
+        draw();
+        requestAnimationFrame(loop);
+        return;
+      }
+      frame += 1;
+      if (shakeTimer > 0) shakeTimer -= 1;
+      if (cannonBeamTimer > 0) cannonBeamTimer -= 1;
+      if (dimensionUnlocked && frame % 60 === 0) {
+        score += 10000;
+        ore += 5000;
+        dimensionPower += 1;
+        updateHud();
+      }
+      if (permanentInvulnerable && ore >= nextCannonOre) {
+        fireCannonBeam();
+        while (ore >= nextCannonOre) nextCannonOre += 10000;
+      }
+      if (!versusMode && bossDefeated && score >= 5000000 && !capitalShip && !capitalDefeated && !finished) {
+        spawnCapitalShip();
+      }
+      if (capitalShip) {
+        researchPoints += .12;
+        if (frame >= capitalShip.shockAt) {
+          for (let i = 0; i < 24; i += 1) {
+            capitalShockwaves.push({
+              x: 665 + Math.random() * 240,
+              y: 180 + Math.random() * 180,
+              vx: -(2.2 + Math.random() * 4.2),
+              vy: (Math.random() - .5) * 3.8,
+              size: 3 + Math.random() * 6
+            });
+          }
+          capitalShip.shockAt = frame + 250;
+          beep(68, .38, "sawtooth", .12);
+        }
+        if (frame % 90 === 0) {
+          capitalSections.filter(part => part.hp <= 0).forEach(part => {
+            part.adjacent.forEach(id => {
+              const adjacent = capitalSections.find(item => item.id === id);
+              const bridgeReady = adjacent?.bridge && bridgeLockBroken && capitalSections.every(item => item.bridge || item.hp <= 0);
+              if (adjacent?.hp > 0 && (!adjacent.bridge || bridgeReady)) adjacent.hp = Math.max(0, adjacent.hp - 25);
+            });
+          });
+        }
+      }
+      if (ship.invuln > 0) ship.invuln -= 1;
+      if (shieldTimer > 0) shieldTimer -= 1;
+      if (missileCooldown > 0) missileCooldown -= 1;
+      if (blackholeCooldown > 0) blackholeCooldown -= 1;
+      if (shieldCooldown > 0) shieldCooldown -= 1;
+      if (blackholeTimer > 0) blackholeTimer -= 1;
+      if (speedBoostTimer > 0) speedBoostTimer -= 1;
+      if (damageBoostTimer > 0) damageBoostTimer -= 1;
+      effects.forEach(effect => effect.ttl -= 1);
+      effects = effects.filter(effect => effect.ttl > 0);
+      const currentShipSpeed = ship.speed * (speedBoostTimer > 0 ? 1.75 : 1);
+      if (keys.ArrowUp || keys.KeyW || keys.KeyZ) ship.y -= currentShipSpeed;
+      if (keys.ArrowDown || keys.KeyS) ship.y += currentShipSpeed;
+      if (keys.ArrowLeft || keys.KeyA || keys.KeyQ) ship.x -= currentShipSpeed;
+      if (keys.ArrowRight || keys.KeyD) ship.x += currentShipSpeed;
+      ship.x = Math.max(30, Math.min(canvas.width - 40, ship.x));
+      ship.y = Math.max(30, Math.min(canvas.height - 30, ship.y));
+      if (mouseDrive && frame >= autoFireAt) {
+        fire(true);
+        autoFireAt = frame + (versusMode && techLevel >= 5 ? 3 : 6);
+      }
+
+      if (frame % (versusMode ? 104 : 54) === 0) spawnRock();
+      if (!versusMode && frame % 190 === 0) spawnDrone();
+      if (!versusMode && !bossSpawned && drill > 1 && laser > 1 && cargo > 1 && ore >= 1200 && frame > 1200) spawnBoss();
+      rocks.forEach(rock => {
+        rock.x += rock.vx;
+        rock.spin += rock.spinSpeed;
+        const distance = Math.hypot(ship.x - rock.x, ship.y - rock.y);
+        if (!rock.whooshed && distance < rock.size + 82 && distance > rock.size + 22) {
+          rock.whooshed = true;
+          beep(rock.massive ? 52 : 115, rock.massive ? .42 : .16, "sine", rock.massive ? .1 : .045);
+        }
+      });
+      if (blackholeTimer > 0) {
+        fragments = [];
+        particles = [];
+        rocks.forEach(rock => {
+          rock.x += (canvas.width / 2 - rock.x) * .035;
+          rock.y += (canvas.height / 2 - rock.y) * .035;
+          rock.hp -= .08;
+        });
+        rocks.forEach((rock, index) => {
+          if (rock.hp <= 0) destroyRock(rock, index);
+        });
+      }
+      rocks = rocks.filter(rock => rock.x > -80 && rock.x < canvas.width + 80);
+      miningDrones.forEach(drone => {
+        if (drone.target && !rocks.includes(drone.target)) {
+          drone.target = null;
+          drone.x = ship.x;
+          drone.y = ship.y;
+        }
+        if (!drone.target) {
+          drone.target = rocks.reduce((best, rock) => !best || Math.hypot(drone.x - rock.x, drone.y - rock.y) < Math.hypot(drone.x - best.x, drone.y - best.y) ? rock : best, null);
+        }
+        if (drone.target) {
+          const angle = Math.atan2(drone.target.y - drone.y, drone.target.x - drone.x);
+          drone.x += Math.cos(angle) * 8;
+          drone.y += Math.sin(angle) * 8;
+          if (Math.hypot(drone.x - drone.target.x, drone.y - drone.target.y) < drone.target.size + 8) {
+            const rockIndex = rocks.indexOf(drone.target);
+            if (rockIndex >= 0) {
+              researchPoints += Math.max(40, drone.target.size * (1.3 + Math.random() * .2));
+              destroyRock(drone.target, rockIndex);
+            }
+            drone.target = null;
+            drone.x = ship.x;
+            drone.y = ship.y;
+          }
+        } else {
+          const orbitRadius = 42 + (drone.phase % 1) * 28;
+          const orbitAngle = frame / 24 + drone.phase;
+          const targetX = ship.x + Math.cos(orbitAngle) * orbitRadius;
+          const targetY = ship.y + Math.sin(orbitAngle) * orbitRadius;
+          drone.x += (targetX - drone.x) * .22;
+          drone.y += (targetY - drone.y) * .22;
+        }
+      });
+      capitalShockwaves.forEach(wave => {
+        wave.x += wave.vx;
+        wave.y += wave.vy;
+      });
+      capitalShockwaves = capitalShockwaves.filter(wave => wave.x > -20 && wave.y > -20 && wave.y < canvas.height + 20);
+      shots.forEach(shot => shot.x += shot.vx);
+      shots = shots.filter(shot => shot.x < canvas.width + 20);
+      fragments.forEach(piece => {
+        piece.x += piece.vx;
+        piece.y += piece.vy;
+        piece.vx *= .992;
+        piece.vy *= .992;
+        piece.ttl -= 1;
+      });
+      fragments = fragments.filter(piece => piece.ttl > 0 && piece.x > -20 && piece.x < canvas.width + 20 && piece.y > -20 && piece.y < canvas.height + 20);
+      particles.forEach(particle => {
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+        particle.vy += .035;
+        particle.ttl -= 1;
+      });
+      particles = particles.filter(particle => particle.ttl > 0);
+      researchPickups.forEach(pickup => {
+        pickup.x += Math.sin(frame / 19 + pickup.phase) * .35;
+        pickup.y += Math.cos(frame / 23 + pickup.phase) * .35;
+        pickup.ttl -= 1;
+      });
+      researchPickups = researchPickups.filter(pickup => pickup.ttl > 0);
+      drones.forEach(drone => {
+        drone.x -= drone.vx;
+        drone.y += Math.sin(frame / 18 + drone.phase) * 2.15;
+        drone.y += (Math.sin(frame / 55 + drone.phase) * drone.amp - (drone.y - canvas.height / 2)) * .006;
+        drone.y = Math.max(48, Math.min(canvas.height - 48, drone.y));
+        if (frame > drone.fireAt) {
+          droneShots.push({ x: drone.x - 20, y: drone.y, vx: -5 });
+          drone.fireAt = frame + 115 + Math.random() * 95;
+        }
+      });
+      drones = drones.filter(drone => drone.x > -60 && drone.hp > 0);
+      droneShots.forEach(shot => shot.x += shot.vx);
+      droneShots = droneShots.filter(shot => shot.x > -30);
+      if (versusMode && rival) {
+        researchPoints += .07;
+        if (rival.invuln > 0) rival.invuln -= 1;
+        if (rivalShieldTimer > 0) rivalShieldTimer -= 1;
+        if (rivalBlackholeTimer > 0) rivalBlackholeTimer -= 1;
+        if (rivalMissileCooldown > 0) rivalMissileCooldown -= 1;
+        if (rivalRespawnTimer > 0) rivalRespawnTimer -= 1;
+        const rivalTargets = rocks.filter(rock => !rock.massive || rivalTechLevel >= 1);
+        const targetRock = rivalTargets.reduce((best, rock) => {
+          if (!best) return rock;
+          return Math.abs(rock.x - rival.x) < Math.abs(best.x - rival.x) ? rock : best;
+        }, null);
+        if (targetRock) {
+          rival.y += Math.sign(targetRock.y - rival.y) * rival.speed;
+          rival.x += Math.sign(targetRock.x - rival.x) * rival.speed * .28;
+        } else {
+          rival.y += Math.sin(frame / 32) * rival.speed;
+        }
+        rival.x = Math.max(canvas.width / 2 + 60, Math.min(canvas.width - 45, rival.x));
+        rival.y = Math.max(48, Math.min(canvas.height - 48, rival.y));
+        if (frame >= rival.fireAt) {
+          rivalShots.push({ x: rival.x - 28, y: rival.y, vx: -(5.5 + rivalLevel * .7) });
+          rival.fireAt = frame + Math.max(16, 78 - rivalLevel * 9 - (rivalTechLevel >= 5 ? 24 : 0));
+        }
+        rivalScore += rivalLevel * 3;
+        rivalResearch += rivalLevel * .07;
+        const nextRivalTech = techs[rivalTechLevel];
+        if (nextRivalTech && rivalResearch >= nextRivalTech.cost) {
+          rivalResearch -= nextRivalTech.cost;
+          rivalTechLevel += 1;
+          effects.push({ type: "flash", ttl: 12 });
+        }
+        if (rivalTechLevel >= 2 && rivalShieldTimer <= 0 && frame % 780 === 0) {
+          rivalShieldTimer = 300;
+        }
+        if (rivalTechLevel >= 3 && rivalMissileCooldown <= 0 && frame % 530 === 0) {
+          damagePlayer(14 + rivalLevel * 2);
+          rivalMissileCooldown = 530;
+          effects.push({ type: "flash", ttl: 12 });
+          beep(105, .2, "sawtooth", .08);
+        }
+        if (rivalTechLevel >= 4 && rivalBlackholeTimer <= 0 && frame % 920 === 0) {
+          rivalBlackholeTimer = 240;
+          damagePlayer(18 + rivalLevel * 2);
+          ship.x += (rival.x - ship.x) * .35;
+          ship.y += (rival.y - ship.y) * .35;
+        }
+      }
+      rivalShots.forEach(shot => shot.x += shot.vx);
+      rivalShots = rivalShots.filter(shot => shot.x > -30);
+      if (boss) {
+        boss.y += boss.dir * 1.4;
+        if (boss.y < 92 || boss.y > canvas.height - 92) boss.dir *= -1;
+        if (frame > boss.fireAt) {
+          droneShots.push({ x: boss.x - 60, y: boss.y - 20, vx: -6 });
+          droneShots.push({ x: boss.x - 60, y: boss.y + 20, vx: -6 });
+          boss.fireAt = frame + 48;
+        }
+      }
+
+      shots.forEach((shot, shotIndex) => {
+        if (capitalShip) {
+          const part = capitalSections.find(item =>
+            shot.x >= item.x && shot.x <= item.x + item.w && shot.y >= item.y && shot.y <= item.y + item.h
+          );
+          if (part) {
+            shots.splice(shotIndex, 1);
+            damageCapitalSection(part, 90 * laser * (damageBoostTimer > 0 ? 2 : 1));
+          }
+        }
+        rocks.forEach((rock, rockIndex) => {
+          const hit = Math.hypot(shot.x - rock.x, shot.y - rock.y) < rock.size;
+          if (hit) {
+            shots.splice(shotIndex, 1);
+            mineRock(rock, rockIndex);
+          }
+        });
+        drones.forEach(drone => {
+          if (Math.hypot(shot.x - drone.x, shot.y - drone.y) < 24) {
+            drone.hp -= laser;
+            shots.splice(shotIndex, 1);
+            if (drone.hp <= 0) {
+              ore += 80;
+              score += 320;
+              updateHud();
+            }
+          }
+        });
+        if (boss && Math.hypot(shot.x - boss.x, shot.y - boss.y) < 72) {
+          shots.splice(shotIndex, 1);
+          damageBoss(80 * laser, .08);
+        }
+        if (versusMode && rival && Math.hypot(shot.x - rival.x, shot.y - rival.y) < 30) {
+          shots.splice(shotIndex, 1);
+          damageRival(laser, true);
+        }
+      });
+
+      rocks.forEach((rock, rockIndex) => {
+        if (Math.hypot(ship.x - rock.x, ship.y - rock.y) < rock.size + 20) {
+          damagePlayer(rock.massive ? 18 : Math.max(1, Math.floor(rock.size / 13)));
+          explodeAt(rock.x, rock.y);
+          beep(rock.massive ? 42 : 78, rock.massive ? .55 : .24, "sawtooth", rock.massive ? .16 : .09);
+          mineRock(rock, rockIndex);
+        }
+        if (versusMode && rival && Math.hypot(rival.x - rock.x, rival.y - rock.y) < rock.size + 20) {
+          damageRival(Math.max(2, Math.floor(rock.size / 7)));
+          rock.hp -= 1;
+          if (rock.hp <= 0) destroyRock(rock, rockIndex);
+        }
+      });
+      researchPickups.forEach((pickup, pickupIndex) => {
+        if (Math.hypot(ship.x - pickup.x, ship.y - pickup.y) < 32) {
+          collectPickup(pickup);
+          researchPickups.splice(pickupIndex, 1);
+        }
+      });
+      fragments.forEach((piece, pieceIndex) => {
+        if (Math.hypot(ship.x - piece.x, ship.y - piece.y) < piece.size + 18) {
+          damagePlayer(1);
+          explodeAt(piece.x, piece.y);
+          fragments.splice(pieceIndex, 1);
+        }
+        rocks.forEach((rock, rockIndex) => {
+          if (Math.hypot(piece.x - rock.x, piece.y - rock.y) < rock.size + piece.size) {
+            rock.hp -= 1;
+            explodeAt(piece.x, piece.y);
+            fragments.splice(pieceIndex, 1);
+            if (rock.hp <= 0) destroyRock(rock, rockIndex);
+          }
+        });
+        drones.forEach(drone => {
+          if (Math.hypot(piece.x - drone.x, piece.y - drone.y) < piece.size + 18) {
+            drone.hp -= 1;
+            explodeAt(piece.x, piece.y);
+            fragments.splice(pieceIndex, 1);
+          }
+        });
+      });
+      drones.forEach(drone => {
+        if (Math.hypot(ship.x - drone.x, ship.y - drone.y) < 36) {
+          damagePlayer(4);
+          drone.hp = 0;
+        }
+      });
+      droneShots.forEach((shot, index) => {
+        if (Math.hypot(ship.x - shot.x, ship.y - shot.y) < 24) {
+          damagePlayer(3);
+          droneShots.splice(index, 1);
+        }
+      });
+      rivalShots.forEach((shot, index) => {
+        if (Math.hypot(ship.x - shot.x, ship.y - shot.y) < 24) {
+          damagePlayer(2 + rivalLevel);
+          rivalShots.splice(index, 1);
+          return;
+        }
+        rocks.forEach((rock, rockIndex) => {
+          if (Math.hypot(shot.x - rock.x, shot.y - rock.y) < rock.size) {
+            rock.hp -= Math.max(.45, rivalLevel * .55);
+            rivalShots.splice(index, 1);
+            if (rock.hp <= 0) {
+              rivalScore += Math.floor(rock.size * 6);
+              spawnFragments(rock.x, rock.y, rock.size, rock.color);
+              rocks.splice(rockIndex, 1);
+            }
+          }
+        });
+      });
+      capitalShockwaves.forEach((wave, index) => {
+        if (Math.hypot(ship.x - wave.x, ship.y - wave.y) < wave.size + 20) {
+          damagePlayer(8);
+          capitalShockwaves.splice(index, 1);
+        }
+      });
+
+      if (frame % 30 === 0) updateHud();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function finishGame() {
+      if (finished) return;
+      finished = true;
+      localStorage.setItem("bossScore", String(score));
+      window.AgentSession?.finishRun(score);
+      let bossLeaderboard = [];
+      try {
+        bossLeaderboard = JSON.parse(localStorage.getItem(bossLeaderboardKey) || "[]");
+      } catch {
+        bossLeaderboard = [];
+      }
+      bossLeaderboard.push({ player: playerId, score, completedAt: Date.now() });
+      bossLeaderboard = bossLeaderboard
+        .sort((a, b) => b.score - a.score || a.completedAt - b.completedAt)
+        .slice(0, 20);
+      localStorage.setItem(bossLeaderboardKey, JSON.stringify(bossLeaderboard));
+      const rows = document.getElementById("rows");
+      rows.innerHTML = bossLeaderboard.map((entry, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${entry.player}</td>
+          <td>${Number(entry.score).toLocaleString()}</td>
+          <td>${index === 0 ? "CAPITAL CONQUEROR" : "사회 신용 광부"}</td>
+        </tr>
+      `).join("");
+      document.getElementById("leaderboard").classList.add("visible");
+    }
+
+    function activateAbility(kind) {
+      if (!canUseAbility(kind)) return;
+      if (kind === "drill") { ore -= 150; drill = 2; beep(280, .08, "square", .08); }
+      if (kind === "laser") { ore -= 300; laser = 2; beep(480, .08, "square", .08); }
+      if (kind === "cargo") { ore -= 500; cargo = 2; beep(340, .08, "square", .08); }
+      if (kind === "missile") useMissile();
+      if (kind === "blackhole") useBlackhole();
+      if (kind === "shield") useShield();
+      if (kind === "mouse") {
+        if (!mouseDriveBought) {
+          mouseDriveBought = true;
+        }
+        mouseDrive = !mouseDrive;
+        beep(mouseDrive ? 860 : 260, .09, "triangle", .08);
+      }
+      if (kind === "nextlife") useNextLife();
+      if (kind === "minigame") {
+        startVersus();
+      }
+      if (kind === "tech") {
+        minigameFrozen = true;
+        renderTechTree();
+        techPopup.classList.add("visible");
+      }
+      if (kind === "minerdrone") deployMiningDrone();
+      if (kind === "capitalattack") useCapitalAttack();
+      if (kind === "radar") startRadar();
+      if (kind === "save") saveRun();
+      if (kind === "load") loadRun();
+      if (kind === "reset") resetRun();
+      if (kind === "finish") finishGame();
+      updateHud();
+    }
+
+    canvas.addEventListener("click", event => {
+      if (unlockNextLifeClick()) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = (event.clientX - rect.left) * (canvas.width / rect.width);
+      const y = (event.clientY - rect.top) * (canvas.height / rect.height);
+      const button = abilityButtons.find(item =>
+        x >= item.x && x <= item.x + 44 && y >= item.y && y <= item.y + 40
+      );
+      if (button) {
+        activateAbility(button.kind);
+      } else {
+        fire();
+      }
+    });
+    canvas.addEventListener("mousemove", event => {
+      if (!mouseDrive || finished) return;
+      const rect = canvas.getBoundingClientRect();
+      ship.x = (event.clientX - rect.left) * (canvas.width / rect.width);
+      ship.y = (event.clientY - rect.top) * (canvas.height / rect.height);
+    });
+    function moveShipFromTouch(touch) {
+      touchGuide = canvasPointFromTouch(touch);
+      ship.x = touchGuide.x;
+      ship.y = touchGuide.y - 82;
+    }
+    function canvasPointFromTouch(touch) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (touch.clientX - rect.left) * (canvas.width / rect.width),
+        y: (touch.clientY - rect.top) * (canvas.height / rect.height)
+      };
+    }
+    function abilityAtPoint(point, padding = 0) {
+      return abilityButtons.find(item =>
+        point.x >= item.x - padding &&
+        point.x <= item.x + 44 + padding &&
+        point.y >= item.y - padding &&
+        point.y <= item.y + 40 + padding
+      );
+    }
+    canvas.addEventListener("touchmove", event => {
+      event.preventDefault();
+      if (finished || touchAbilityActive) return;
+      moveShipFromTouch(event.touches[0]);
+    }, { passive: false });
+    canvas.addEventListener("touchstart", event => {
+      event.preventDefault();
+      if (unlockNextLifeClick()) return;
+      const button = abilityAtPoint(canvasPointFromTouch(event.touches[0]), 5);
+      if (button) {
+        touchAbilityActive = true;
+        touchGuide = null;
+        activateAbility(button.kind);
+        return;
+      }
+      moveShipFromTouch(event.touches[0]);
+      fire();
+    }, { passive: false });
+    canvas.addEventListener("touchend", () => {
+      touchAbilityActive = false;
+      touchGuide = null;
+    });
+    canvas.addEventListener("touchcancel", () => {
+      touchAbilityActive = false;
+      touchGuide = null;
+    });
+    function moveRadarFromPointer(event) {
+      const rect = radarCanvas.getBoundingClientRect();
+      const point = event.touches ? event.touches[0] : event;
+      moveRadar(
+        (point.clientX - rect.left) * (radarCanvas.width / rect.width),
+        (point.clientY - rect.top) * (radarCanvas.height / rect.height)
+      );
+    }
+    radarCanvas.addEventListener("mousemove", moveRadarFromPointer);
+    radarCanvas.addEventListener("click", moveRadarFromPointer);
+    radarCanvas.addEventListener("touchmove", event => {
+      event.preventDefault();
+      moveRadarFromPointer(event);
+    }, { passive: false });
+    document.getElementById("revive").addEventListener("click", revivePlayer);
+    document.getElementById("close-minigame").addEventListener("click", function () {
+      minigameFrozen = false;
+      document.getElementById("minigame-popup").classList.remove("visible");
+      if (versusResult === "loss") startVersus();
+      if (versusResult === "win" && !capitalShip && !capitalDefeated) {
+        bossDefeated = true;
+        spawnCapitalShip();
+      }
+    });
+    document.getElementById("close-tech").addEventListener("click", function () {
+      minigameFrozen = false;
+      techPopup.classList.remove("visible");
+    });
+
+    document.addEventListener("keydown", event => {
+      if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) {
+        event.preventDefault();
+      }
+      keys[event.code] = true;
+      if (radarActive) {
+        const step = 14;
+        if (event.code === "ArrowUp" || event.code === "KeyW" || event.code === "KeyZ") moveRadar(radarCursor.x, radarCursor.y - step);
+        if (event.code === "ArrowDown" || event.code === "KeyS") moveRadar(radarCursor.x, radarCursor.y + step);
+        if (event.code === "ArrowLeft" || event.code === "KeyA" || event.code === "KeyQ") moveRadar(radarCursor.x - step, radarCursor.y);
+        if (event.code === "ArrowRight" || event.code === "KeyD") moveRadar(radarCursor.x + step, radarCursor.y);
+        return;
+      }
+      if (event.code === "Space") {
+        if (!spaceLocked) {
+          fire();
+          spaceLocked = true;
+        }
+      }
+    });
+    document.addEventListener("keyup", event => {
+      keys[event.code] = false;
+      if (event.code === "Space") spaceLocked = false;
+    });
+
+    if (new URLSearchParams(location.search).has("testCapital")) {
+      score = 5000000;
+      ore = 5000000;
+      researchPoints = 100000;
+      bossDefeated = true;
+      blackholeBought = true;
+      blackholeCooldown = 0;
+    }
+    updateHud();
+    loop();
+    }
+  </script>
+</body>
+</html>

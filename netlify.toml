@@ -1,0 +1,23 @@
+[[edge_functions]]
+  path = "/*"
+  function = "block-cli-clients"
+
+[[redirects]]
+  from = "/api/run/start"
+  to = "/.netlify/functions/run-start"
+  status = 200
+
+[[redirects]]
+  from = "/api/run/level"
+  to = "/.netlify/functions/run-level"
+  status = 200
+
+[[redirects]]
+  from = "/api/run/finish"
+  to = "/.netlify/functions/run-finish"
+  status = 200
+
+[[redirects]]
+  from = "/api/leaderboard"
+  to = "/.netlify/functions/leaderboard"
+  status = 200

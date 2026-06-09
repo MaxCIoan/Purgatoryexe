@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LEVEL 3</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: #050505;
+      background: #000;
+      font-family: "Malgun Gothic", Arial, sans-serif;
+    }
+    main {
+      min-height: 100vh;
+      display: grid;
+      align-content: end;
+      gap: 14px;
+      padding: 24px;
+    }
+    .panel {
+      display: grid;
+      gap: 10px;
+      max-width: 620px;
+      color: #151515;
+      font-weight: 900;
+    }
+    label { color: #202020; }
+    input {
+      min-height: 44px;
+      border: 1px solid #111;
+      background: #030303;
+      color: #ff1f1f;
+      padding: 10px;
+      font-size: 20px;
+    }
+    button {
+      min-height: 42px;
+      width: max-content;
+      border: 1px solid #151515;
+      background: #040404;
+      color: #242424;
+      padding: 8px 14px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .hint { color: #111; font-size: 12px; }
+    .secret {
+      display: inline-block;
+      width: max-content;
+      padding: 10px 14px;
+      border: 2px solid #333;
+      color: #555;
+      background: #090909;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 900;
+      word-break: break-all;
+      pointer-events: none;
+    }
+    .secret.visible {
+      border: 2px solid #ff1f1f;
+      color: #ff1f1f;
+      background: #180000;
+      text-decoration: underline;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    .message { color: #ff1f1f; min-height: 18px; }
+  </style>
+</head>
+<body data-level="level3">
+  <main>
+    <section class="panel">
+      <label for="motto">북조선 구호를 입력하라</label>
+      <input id="motto" autocomplete="off" placeholder="어둠 속의 답">
+      <button id="check" type="button">확인</button>
+      <div class="message" id="message"></div>
+      <p class="hint">힌트: 강성대국</p>
+      <a class="secret" id="secret" href="boss.html">FINAL BOSS LOCKED — COMPLETE LEVEL 3</a>
+    </section>
+  </main>
+
+  <script src="session-tracker.js"></script>
+  <script>
+    if (!window.AgentSession?.accessDenied) {
+    const input = document.getElementById("motto");
+    const message = document.getElementById("message");
+    const secret = document.getElementById("secret");
+    secret.addEventListener("click", function (event) {
+      if (!secret.classList.contains("visible")) {
+        event.preventDefault();
+        return;
+      }
+    });
+
+    function unlockBossLink() {
+      secret.classList.add("visible");
+      secret.textContent = "ENTER FINAL BOSS";
+      message.textContent = "링크를 눌러 최종 보스로 이동하라.";
+    }
+
+    document.getElementById("check").addEventListener("click", function () {
+      if (input.value.trim() === "강성대국") {
+        localStorage.setItem("level3Complete", "true");
+        window.AgentSession?.completeLevel("level3", 100000);
+        unlockBossLink();
+      } else {
+        message.textContent = "틀림.";
+      }
+    });
+
+    if (localStorage.getItem("level3Complete") === "true" || window.AgentSession?.data?.levels?.level3?.completedAt) {
+      localStorage.setItem("level3Complete", "true");
+      unlockBossLink();
+    }
+    }
+  </script>
+</body>
+</html>

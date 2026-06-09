@@ -1,0 +1,12 @@
+{
+  "name": "social-credit-poster",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check session-tracker.js && node --check lib/scoring.js"
+  },
+  "dependencies": {
+    "@netlify/database": "^1.0.0"
+  }
+}

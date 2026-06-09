@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Edit Agent Profile</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at 50% 15%, #163724, #020805 72%);
+    }
+    main {
+      width: min(620px, 100%);
+      padding: 24px;
+      border: 4px solid #ffe600;
+      background: #06120b;
+      box-shadow: 9px 9px 0 #000;
+    }
+    h1 { margin: 0 0 8px; color: #ff3b4f; text-shadow: 2px 2px 0 #ffe600; }
+    label { display: grid; gap: 8px; margin: 20px 0; font-weight: 900; }
+    .agent-input {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      border: 3px solid #35ff65;
+      background: #000;
+    }
+    .prefix {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      color: #ffe600;
+      font-weight: 900;
+    }
+    input {
+      min-width: 0;
+      border: 0;
+      border-left: 2px solid #35ff65;
+      padding: 12px;
+      color: #fff;
+      background: #071c10;
+      font: 900 18px Arial, sans-serif;
+      text-transform: uppercase;
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    button, a {
+      min-height: 42px;
+      padding: 9px 14px;
+      border: 3px solid #000;
+      color: #000;
+      background: #ffe600;
+      text-decoration: none;
+      font-weight: 900;
+      box-shadow: 4px 4px 0 #000;
+      cursor: pointer;
+    }
+    #message { min-height: 20px; color: #35ff65; font-weight: 900; }
+  </style>
+</head>
+<body data-level="index">
+  <main>
+    <h1>Edit Agent Profile</h1>
+    <p>The `AGENT-VECTOR-` prefix is permanent. Only the suffix can be changed.</p>
+    <label>
+      Agent Name
+      <span class="agent-input">
+        <span class="prefix">AGENT-VECTOR-</span>
+        <input id="suffix" maxlength="20" autocomplete="off" placeholder="YOUR-NAME">
+      </span>
+    </label>
+    <div class="actions">
+      <button id="save-profile" type="button">Save Profile</button>
+      <a href="payment.html">Return to Level 1</a>
+    </div>
+    <p id="message"></p>
+  </main>
+
+  <script src="session-tracker.js"></script>
+  <script>
+    const suffix = document.getElementById("suffix");
+    suffix.value = (window.AgentSession.agent.split("AGENT-VECTOR-")[1] || window.AgentSession.agent.split("-").pop() || "CADET");
+    document.getElementById("save-profile").addEventListener("click", function () {
+      const agent = window.AgentSession.updateAgentSuffix(suffix.value);
+      suffix.value = agent.replace("AGENT-VECTOR-", "");
+      document.getElementById("message").textContent = `Saved as ${agent}`;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,812 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>사회 신용 결제 센터</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: #000;
+      font-family: "Malgun Gothic", Gulim, Arial, sans-serif;
+      background: #fff;
+      background-image:
+        linear-gradient(90deg, rgba(0,0,0,.06) 1px, transparent 1px),
+        linear-gradient(rgba(0,0,0,.06) 1px, transparent 1px);
+      background-size: 18px 18px;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 180px minmax(0, 1fr) 180px;
+      gap: 14px;
+      padding: 14px;
+    }
+
+    header,
+    .portal,
+    .ad,
+    .ticker,
+    footer {
+      border: 3px double #000;
+      background: #fff;
+      box-shadow: 5px 5px 0 #000;
+    }
+
+    .left-ads,
+    .right-ads {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+      position: sticky;
+      top: 14px;
+      height: max-content;
+    }
+
+    .ad {
+      min-height: 148px;
+      padding: 10px;
+      overflow: hidden;
+      position: relative;
+      color: #fff;
+      border: 2px solid #14001f;
+      background:
+        linear-gradient(90deg, rgba(32,0,48,.92), rgba(32,0,48,.34)),
+        url("assets/mmo-banner.png") 58% center / cover no-repeat;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.14), 5px 5px 0 #000;
+    }
+
+    .ad.mmo {
+      background:
+        linear-gradient(90deg, rgba(38,0,68,.96), rgba(38,0,68,.3)),
+        url("assets/mmo-banner.png") 62% center / cover no-repeat;
+    }
+
+    .ad.sports {
+      background:
+        linear-gradient(90deg, rgba(0,24,72,.96), rgba(0,24,72,.32)),
+        url("assets/cyber-cafe-banner.png") 60% center / cover no-repeat;
+    }
+
+    .ad.cafe {
+      background:
+        linear-gradient(90deg, rgba(0,32,28,.94), rgba(0,32,28,.28)),
+        url("assets/cyber-cafe-banner.png") 70% center / cover no-repeat;
+    }
+
+    .ad.crypto {
+      background:
+        linear-gradient(90deg, rgba(78,0,0,.96), rgba(78,0,0,.32)),
+        url("assets/mmo-banner.png") 74% center / cover no-repeat;
+    }
+
+    .ad::before {
+      content: "EVENT";
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      padding: 3px 7px;
+      border: 2px solid #fff;
+      color: #fff;
+      background: rgba(0,0,0,.62);
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .ad.sports::before {
+      content: "E-SPORTS";
+    }
+
+    .ad.cafe::before {
+      content: "PC방";
+    }
+
+    .ad.crypto::before {
+      content: "CRYPTO";
+    }
+
+    .ad::after {
+      content: "무료";
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      padding: 3px 7px;
+      border: 2px solid #fff;
+      border-radius: 999px;
+      color: #2a001f;
+      background: #ffd400;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .ad strong {
+      display: block;
+      max-width: 120px;
+      color: #fff;
+      font-size: 18px;
+      line-height: 1.08;
+      text-shadow: 3px 3px 0 #000, 0 0 12px #ff4dff;
+    }
+
+    .ad span {
+      display: inline-block;
+      margin-top: 9px;
+      max-width: 104px;
+      padding: 5px 7px;
+      border: 2px solid #fff;
+      border-radius: 999px;
+      color: #1a001f;
+      background: linear-gradient(180deg, #ffe800, #ff8a00);
+      font-size: 11px;
+      font-weight: 900;
+      box-shadow: 2px 2px 0 #000;
+    }
+
+    .ad-claim,
+    .popup-ad .ad-claim {
+      display: inline-block;
+      min-height: 0;
+      margin-top: 9px;
+      padding: 5px 9px;
+      border: 2px solid #fff;
+      border-radius: 999px;
+      color: #1a001f;
+      background: linear-gradient(180deg, #ffe800, #ff8a00);
+      font-size: 12px;
+      font-weight: 900;
+      box-shadow: 2px 2px 0 #000;
+      cursor: pointer;
+    }
+
+    .ad-art {
+      height: 34px;
+      width: min(128px, 82%);
+      margin: 8px 0 0;
+      border: 2px solid rgba(255,255,255,.85);
+      background:
+        repeating-linear-gradient(135deg, rgba(255,255,255,.36) 0 8px, transparent 8px 16px),
+        linear-gradient(90deg, rgba(255,0,221,.85), rgba(67,34,255,.72));
+      box-shadow: 0 0 14px rgba(255,255,255,.28);
+    }
+
+    main {
+      display: grid;
+      gap: 14px;
+    }
+
+    header {
+      padding: 18px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      color: #c40000;
+      font-size: clamp(32px, 6vw, 76px);
+      letter-spacing: 0;
+      text-shadow: 3px 3px 0 #000;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .ticker {
+      padding: 8px;
+      color: #c40000;
+      font-size: 14px;
+      font-weight: 900;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .ticker span {
+      display: inline-block;
+      animation: crawl 16s linear infinite;
+    }
+
+    @keyframes crawl {
+      from { transform: translateX(100%); }
+      to { transform: translateX(-100%); }
+    }
+
+    .hero-image {
+      min-height: 220px;
+      border: 3px double #000;
+      background:
+        linear-gradient(rgba(255,255,255,.18), rgba(255,255,255,.72)),
+        url("assets/propaganda-poster.png") center / cover no-repeat;
+      box-shadow: 5px 5px 0 #000;
+    }
+
+    .portal {
+      padding: 18px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      color: #c40000;
+      font-size: 30px;
+      text-decoration: underline;
+    }
+
+    .warning {
+      margin: 0 0 16px;
+      padding: 10px;
+      border: 2px solid #c40000;
+      color: #c40000;
+      font-size: 13px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    form {
+      display: grid;
+      gap: 16px;
+    }
+
+    fieldset {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 0;
+      padding: 14px;
+      border: 2px solid #000;
+    }
+
+    legend {
+      color: #c40000;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 38px;
+      border: 2px solid #000;
+      border-radius: 0;
+      padding: 8px;
+      color: #000;
+      background: #fff;
+      font: inherit;
+    }
+
+    input[readonly] {
+      color: #c40000;
+      background: #f5f5f5;
+    }
+
+    .full { grid-column: 1 / -1; }
+
+    .pay-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .pay-option {
+      min-height: 96px;
+      border: 2px solid #000;
+      padding: 10px;
+      background: #fff;
+    }
+
+    .pay-option strong {
+      color: #c40000;
+      font-size: 20px;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    button,
+    .back {
+      min-height: 48px;
+      border: 3px solid #000;
+      background: #c40000;
+      color: #fff;
+      padding: 10px 16px;
+      font-size: 16px;
+      font-weight: 900;
+      text-decoration: none;
+      box-shadow: 4px 4px 0 #000;
+      cursor: pointer;
+    }
+
+    .result {
+      color: #c40000;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    footer {
+      padding: 12px;
+      color: #c40000;
+      font-size: 12px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .skill-bar {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 30;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      border: 3px solid #000;
+      color: #000;
+      background: #fff;
+      box-shadow: 6px 6px 0 #000;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .sigil {
+      position: fixed;
+      z-index: 35;
+      width: 92px;
+      height: 92px;
+      border: 4px solid #ffe600;
+      border-radius: 50%;
+      color: #ffe600;
+      background: radial-gradient(circle, #c40000 0 56%, #530000 57% 100%);
+      box-shadow: 0 0 0 4px #000, 0 0 38px rgba(255,230,0,.86);
+      font-size: 44px;
+      font-weight: 900;
+      cursor: pointer;
+      animation: sigilPulse .7s ease-in-out infinite alternate;
+    }
+
+    @keyframes sigilPulse {
+      from { transform: scale(.9) rotate(-7deg); }
+      to { transform: scale(1.08) rotate(7deg); }
+    }
+
+    .skill-total {
+      color: #c40000;
+      font-size: 20px;
+    }
+
+    .upgrade {
+      min-height: 34px;
+      padding: 5px 10px;
+      border: 2px solid #000;
+      color: #000;
+      background: #ffd900;
+      box-shadow: 3px 3px 0 #000;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .upgrade:disabled {
+      color: #666;
+      background: #d7d7d7;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .level-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 5px 10px;
+      border: 2px solid #000;
+      color: #fff;
+      background: #c40000;
+      text-decoration: none;
+      box-shadow: 3px 3px 0 #000;
+    }
+
+    .level-link.locked {
+      pointer-events: none;
+      color: #777;
+      background: #d7d7d7;
+      box-shadow: none;
+    }
+
+    .popup-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .popup-ad {
+      position: fixed;
+      width: min(320px, calc(100vw - 28px));
+      min-height: 126px;
+      pointer-events: auto;
+      border: 3px solid #fff;
+      color: #fff;
+      padding: 12px;
+      background:
+        linear-gradient(90deg, rgba(24,0,58,.96), rgba(24,0,58,.2)),
+        url("assets/mmo-banner.png") 65% center / cover no-repeat;
+      box-shadow: 0 0 0 3px #000, 8px 8px 0 rgba(0,0,0,.82);
+      animation: popIn .18s ease-out;
+    }
+
+    .popup-ad strong {
+      display: block;
+      max-width: 210px;
+      color: #fff;
+      font-size: 22px;
+      line-height: 1.05;
+      text-shadow: 3px 3px 0 #000, 0 0 12px #ff4dff;
+    }
+
+    .popup-ad span {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 5px 9px;
+      border: 2px solid #fff;
+      border-radius: 999px;
+      color: #210001;
+      background: linear-gradient(180deg, #fff000, #ff8500);
+      font-size: 12px;
+      font-weight: 900;
+      box-shadow: 2px 2px 0 #000;
+    }
+
+    .popup-ad button {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      min-height: 28px;
+      padding: 2px 8px;
+      border: 2px solid #000;
+      background: #fff;
+      color: #000;
+      box-shadow: none;
+      font-size: 15px;
+    }
+
+    .popup-ad::after {
+      content: "무료";
+      position: absolute;
+      right: 42px;
+      bottom: 12px;
+      padding: 5px 8px;
+      border: 2px solid #fff;
+      border-radius: 999px;
+      color: #200018;
+      background: #ffe600;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .popup-ad.sports {
+      background:
+        linear-gradient(90deg, rgba(0,36,96,.96), rgba(0,36,96,.2)),
+        url("assets/cyber-cafe-banner.png") 64% center / cover no-repeat;
+    }
+
+    .popup-ad.sports::after {
+      content: "승부";
+    }
+
+    .popup-ad.cafe {
+      background:
+        linear-gradient(90deg, rgba(0,44,36,.96), rgba(0,44,36,.2)),
+        url("assets/cyber-cafe-banner.png") 72% center / cover no-repeat;
+    }
+
+    .popup-ad.crypto {
+      background:
+        linear-gradient(90deg, rgba(88,0,0,.96), rgba(88,0,0,.22)),
+        url("assets/mmo-banner.png") 72% center / cover no-repeat;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(.72) rotate(-2deg); opacity: 0; }
+      to { transform: scale(1) rotate(0); opacity: 1; }
+    }
+
+    .bottom-ads {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    @media (max-width: 920px) {
+      .page { grid-template-columns: 1fr; }
+      .left-ads,
+      .right-ads { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .bottom-ads { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 560px) {
+      fieldset,
+      .pay-grid,
+      .left-ads,
+      .right-ads,
+      .bottom-ads { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body data-level="level1">
+  <div class="page">
+    <aside class="left-ads" aria-label="왼쪽 광고">
+      <div class="ad mmo"><strong>어제의 마통 오늘의 클로저!</strong><div class="ad-art"></div><button class="ad-claim" type="button">지금 버튼 생성하기</button></div>
+      <div class="ad cafe"><strong>PC방 야간 정액권 폭주!</strong><div class="ad-art"></div><button class="ad-claim" type="button">라면 쿠폰 지급중</button></div>
+      <div class="ad crypto"><strong>크립토 드래곤 레이드</strong><div class="ad-art"></div><button class="ad-claim" type="button">NFT 보스 입장</button></div>
+      <div class="ad sports"><strong>e스포츠 승부예측 왕중왕</strong><div class="ad-art"></div><button class="ad-claim" type="button">응원 포인트 지급</button></div>
+    </aside>
+
+    <main>
+      <header>
+        <h1>사회 신용 결제 포털</h1>
+        <p class="subtitle">흑백 잉크 전용 · ATC / IFC / NFT CRYPTO / DEBIT 패러디 접수처</p>
+      </header>
+
+      <div class="ticker"><span>긴급 광고: 가짜 사회 신용 2700억 포인트 지급 대기중 ★ 실제 결제 없음 ★ 실제 은행 정보 입력 금지 ★</span></div>
+      <div class="hero-image" role="img" aria-label="사회 신용 선전 포스터 이미지"></div>
+
+      <section class="portal">
+        <h2>결제 정보 입력</h2>
+        <p class="warning"></p>
+
+        <form id="fake-payment">
+          <fieldset>
+            <legend>인민 고객 정보</legend>
+            <label>이름 <input type="text" placeholder="예: 가짜이름"></label>
+            <label>성 <input type="text" placeholder="예: 가짜성"></label>
+            <label class="full">주소 <input type="text" placeholder="예: 123 Fake Street"></label>
+            <label>생년월일 <input type="text" placeholder="예: 1900-01-01"></label>
+            <label>전화번호 <input type="text" placeholder="예: 000-0000-0000"></label>
+            <label>도시 <input type="text" placeholder="예: 서울풍자시"></label>
+            <label>국가 <input type="text" placeholder="예: 밈 공화국"></label>
+          </fieldset>
+
+          <fieldset>
+            <legend>결제 방식</legend>
+            <div class="pay-grid full">
+              <div class="pay-option"><strong>ATC</strong><br>승인 터널 코드<br>상태: 가짜</div>
+              <div class="pay-option"><strong>IFC</strong><br>인민 금융 쿠폰<br>상태: 가짜</div>
+              <div class="pay-option"><strong>NFT CRYPTO</strong><br>블록체인 충성 토큰<br>상태: 가짜</div>
+            </div>
+            <label>ATC 코드 <input type="text" readonly value="DUMMY-ATC-ONLY"></label>
+            <label>IFC 코드 <input type="text" readonly value="DUMMY-IFC-ONLY"></label>
+            <label class="full">NFT CRYPTO 지갑 <input type="text" readonly value="DO-NOT-USE-REAL-WALLET"></label>
+          </fieldset>
+
+          <fieldset>
+            <legend>DEBIT 카드 패러디 영역</legend>
+            <label class="full">카드 번호 <input type="text" readonly value="0000 0000 0000 0000"></label>
+            <label>만료일 <input type="text" readonly value="00/00"></label>
+            <label>보안 코드 <input type="text" readonly value="FAKE"></label>
+          </fieldset>
+
+          <div class="button-row">
+            <button type="submit">CCP에 가짜 결제 보내기</button>
+            <a class="back" href="index.html">포스터로 돌아가기</a>
+            <span class="result" id="result"></span>
+          </div>
+        </form>
+      </section>
+
+      <footer>이 페이지는 풍자입니다. 실제 결제, 실제 은행 정보 수집, 실제 사회 신용 포인트는 없습니다.</footer>
+    </main>
+
+    <aside class="right-ads" aria-label="오른쪽 광고">
+      <div class="ad mmo"><strong>신규 마법사 출석 보상!</strong><div class="ad-art"></div><button class="ad-claim" type="button">무료 뽑기 10회</button></div>
+      <div class="ad sports"><strong>제주 스타디움 쿠폰전</strong><div class="ad-art"></div><button class="ad-claim" type="button">SSR 응원봉 지급</button></div>
+      <div class="ad crypto"><strong>강남 IFC 코인 리그</strong><div class="ad-art"></div><button class="ad-claim" type="button">클릭하면 광고뿐</button></div>
+      <div class="ad cafe"><strong>ATC 사이버 카페 특가</strong><div class="ad-art"></div><button class="ad-claim" type="button">오늘 밤 마감</button></div>
+    </aside>
+
+    <section class="bottom-ads" aria-label="하단 광고">
+      <div class="ad sports"><strong>초고속 배너 파티</strong><div class="ad-art"></div><button class="ad-claim" type="button">마우스 올리면 반짝</button></div>
+      <div class="ad mmo"><strong>포인트 던전 페스티벌</strong><div class="ad-art"></div><button class="ad-claim" type="button">상상 결제 승인</button></div>
+      <div class="ad crypto"><strong>사회 신용 럭키박스</strong><div class="ad-art"></div><button class="ad-claim" type="button">전원 미당첨</button></div>
+      <div class="ad cafe"><strong>1999 웹카페 핫딜</strong><div class="ad-art"></div><button class="ad-claim" type="button">지금 즉시 입장</button></div>
+    </section>
+  </div>
+
+  <div class="popup-layer" id="popup-layer" aria-live="polite"></div>
+  <div class="skill-bar" aria-live="polite">
+    <span>사회 스킬</span>
+    <span class="skill-total" id="skill-total">0</span>
+    <button class="upgrade" id="fast-popups" type="button" disabled>팝업 가속 1,000</button>
+    <button class="upgrade" id="click-power" type="button" disabled>클릭 파워 2,500</button>
+    <button class="upgrade" id="sigil-upgrade" type="button" disabled>특수 문장 25,000</button>
+    <button class="upgrade" id="auto-clicker" type="button" disabled>자동 클릭기 10,000</button>
+    <a class="level-link locked" id="level-two" href="level2.html">LEVEL 2 200,000</a>
+    <span id="player-id"></span>
+  </div>
+
+  <script src="session-tracker.js"></script>
+  <script>
+    const userIdKey = "socialCreditUserId";
+    const skillKey = "socialCreditSkill";
+    const fastKey = "socialCreditFastPopups";
+    const autoKey = "socialCreditAutoClicker";
+    const clickPowerKey = "socialCreditClickPower";
+    const sigilKey = "socialCreditSigils";
+    const playerId = localStorage.getItem(userIdKey) || `AGENT-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    localStorage.setItem(userIdKey, playerId);
+
+    let socialSkill = Number(localStorage.getItem(skillKey) || 0);
+    let popupIntervalMs = localStorage.getItem(fastKey) === "true" ? 850 : 2400;
+    let autoClicker = localStorage.getItem(autoKey) === "true";
+    let clickPower = Number(localStorage.getItem(clickPowerKey) || 100);
+    let sigilsUnlocked = localStorage.getItem(sigilKey) === "true";
+    let popupTimer;
+    let sigilTimer;
+
+    const skillTotal = document.getElementById("skill-total");
+    const fastPopups = document.getElementById("fast-popups");
+    const clickPowerButton = document.getElementById("click-power");
+    const sigilButton = document.getElementById("sigil-upgrade");
+    const autoClickerButton = document.getElementById("auto-clicker");
+    const levelTwo = document.getElementById("level-two");
+    document.getElementById("player-id").textContent = playerId;
+
+    function updateSkillUi() {
+      skillTotal.textContent = socialSkill.toLocaleString();
+      fastPopups.disabled = socialSkill < 1000 || localStorage.getItem(fastKey) === "true";
+      fastPopups.textContent = localStorage.getItem(fastKey) === "true" ? "팝업 가속 활성" : "팝업 가속 1,000";
+      clickPowerButton.disabled = socialSkill < 2500 || clickPower >= 500;
+      clickPowerButton.textContent = clickPower >= 500 ? "클릭 파워 x5 활성" : "클릭 파워 x5 2,500";
+      sigilButton.disabled = socialSkill < 25000 || sigilsUnlocked;
+      sigilButton.textContent = sigilsUnlocked ? "특수 문장 활성" : "특수 문장 25,000";
+      autoClickerButton.disabled = socialSkill < 10000 || autoClicker;
+      autoClickerButton.textContent = autoClicker ? "자동 클릭기 활성" : "자동 클릭기 10,000";
+      levelTwo.classList.toggle("locked", socialSkill < 200000);
+    }
+
+    function addSkill(amount) {
+      socialSkill += amount;
+      localStorage.setItem(skillKey, String(socialSkill));
+      window.AgentSession?.setLevelScore("level1", socialSkill);
+      updateSkillUi();
+    }
+
+    document.addEventListener("click", function (event) {
+      if (event.target.classList.contains("ad-claim")) {
+        addSkill(clickPower);
+      }
+    });
+
+    fastPopups.addEventListener("click", function () {
+      if (socialSkill < 1000 || localStorage.getItem(fastKey) === "true") return;
+      socialSkill -= 1000;
+      localStorage.setItem(skillKey, String(socialSkill));
+      localStorage.setItem(fastKey, "true");
+      popupIntervalMs = 850;
+      restartPopups();
+      updateSkillUi();
+    });
+
+    autoClickerButton.addEventListener("click", function () {
+      if (socialSkill < 10000 || autoClicker) return;
+      socialSkill -= 10000;
+      autoClicker = true;
+      localStorage.setItem(skillKey, String(socialSkill));
+      localStorage.setItem(autoKey, "true");
+      window.setInterval(() => addSkill(100), 1400);
+      updateSkillUi();
+    });
+
+    clickPowerButton.addEventListener("click", function () {
+      if (socialSkill < 2500 || clickPower >= 500) return;
+      socialSkill -= 2500;
+      clickPower = 500;
+      localStorage.setItem(skillKey, String(socialSkill));
+      localStorage.setItem(clickPowerKey, String(clickPower));
+      updateSkillUi();
+    });
+
+    sigilButton.addEventListener("click", function () {
+      if (socialSkill < 25000 || sigilsUnlocked) return;
+      socialSkill -= 25000;
+      sigilsUnlocked = true;
+      localStorage.setItem(skillKey, String(socialSkill));
+      localStorage.setItem(sigilKey, "true");
+      startSigils();
+      updateSkillUi();
+    });
+
+    if (autoClicker) {
+      window.setInterval(() => addSkill(100), 1400);
+    }
+
+    function spawnSigil() {
+      if (!sigilsUnlocked || document.querySelector(".sigil")) return;
+      const sigil = document.createElement("button");
+      sigil.className = "sigil";
+      sigil.type = "button";
+      sigil.textContent = "☭";
+      sigil.style.left = `${Math.floor(Math.random() * Math.max(1, window.innerWidth - 120)) + 10}px`;
+      sigil.style.top = `${Math.floor(Math.random() * Math.max(1, window.innerHeight - 160)) + 10}px`;
+      sigil.setAttribute("aria-label", "특수 공산주의 문장 15000 포인트");
+      sigil.addEventListener("click", function () {
+        addSkill(15000);
+        sigil.remove();
+      });
+      document.body.appendChild(sigil);
+      window.setTimeout(() => sigil.remove(), 6200);
+    }
+
+    function startSigils() {
+      window.clearInterval(sigilTimer);
+      sigilTimer = window.setInterval(spawnSigil, 9000);
+      window.setTimeout(spawnSigil, 1200);
+    }
+
+    document.getElementById("fake-payment").addEventListener("submit", function (event) {
+      event.preventDefault();
+      document.getElementById("result").textContent = "거절됨: 실제 결제 정보는 받지 않습니다. CCP 가짜 결제 영수증만 상상으로 발급되었습니다.";
+    });
+
+    const popupLayer = document.getElementById("popup-layer");
+    const popupAds = [
+      ["mmo", "신화급 검객 즉시 지급!", "MMO 접속 보상"],
+      ["sports", "PC방 e스포츠 결승 쿠폰!", "응원하면 포인트"],
+      ["cafe", "야간 정액권 990원?", "라면 + 음료 세트"],
+      ["crypto", "드래곤 NFT 상장 임박!", "가짜 지갑 연결"],
+      ["mmo", "마법사 길드 긴급 모집", "무료 장비 박스"],
+      ["sports", "축구 승부예측 대폭발", "오늘 밤 마감"]
+    ];
+
+    function spawnPopup() {
+      const [kind, title, tag] = popupAds[Math.floor(Math.random() * popupAds.length)];
+      const popup = document.createElement("div");
+      popup.className = `popup-ad ${kind}`;
+      popup.style.left = `${Math.floor(Math.random() * Math.max(1, window.innerWidth - 340)) + 8}px`;
+      popup.style.top = `${Math.floor(Math.random() * Math.max(1, window.innerHeight - 180)) + 8}px`;
+      popup.innerHTML = `<button type="button" aria-label="광고 닫기">X</button><strong>${title}</strong><button class="ad-claim" type="button">${tag}</button>`;
+      popup.querySelector("button").addEventListener("click", () => popup.remove());
+      popupLayer.appendChild(popup);
+
+      const popups = popupLayer.querySelectorAll(".popup-ad");
+      if (popups.length > 10) popups[0].remove();
+    }
+
+    for (let i = 0; i < 4; i += 1) {
+      window.setTimeout(spawnPopup, 300 + i * 500);
+    }
+
+    function restartPopups() {
+      window.clearInterval(popupTimer);
+      popupTimer = window.setInterval(spawnPopup, popupIntervalMs);
+    }
+
+    updateSkillUi();
+    window.AgentSession?.setLevelScore("level1", socialSkill);
+    restartPopups();
+    if (sigilsUnlocked) startSigils();
+    levelTwo.addEventListener("click", function () {
+      if (!levelTwo.classList.contains("locked")) {
+        window.AgentSession?.completeLevel("level1", socialSkill);
+      }
+    });
+  </script>
+</body>
+</html>
