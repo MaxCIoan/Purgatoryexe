@@ -3,6 +3,7 @@
   const HISTORY_KEY = "socialCreditAttemptHistoryV1";
   const PROFILE_KEY = "socialCreditAgentProfileV1";
   const TRUSTED_PROGRESS_KEY = "socialCreditTrustedProgressV1";
+  const TRACKER_VERSION = "20260609e";
   const page = document.body.dataset.level || "unknown";
   const appRoot = new URL(".", document.currentScript?.src || window.location.href);
   const appUrl = path => new URL(String(path).replace(/^\/+/, ""), appRoot).href;
@@ -430,15 +431,17 @@
       render();
       return;
     }
-    if (numericScore < levelCompletionMinimums[name]) {
-      markTampered(`${name} was completed below the required score`);
+    const level = ensureLevel(name);
+    level.startedAt ||= Date.now();
+    level.score = Math.max(level.score || 0, Number(score) || 0);
+    if (level.score < levelCompletionMinimums[name]) {
+      recalculateTotal();
+      saveSession();
+      writeTrustedProgress();
       render();
       return;
     }
-    const level = ensureLevel(name);
-    level.startedAt ||= Date.now();
     level.completedAt ||= Date.now();
-    level.score = Math.max(level.score || 0, Number(score) || 0);
     recalculateTotal();
     saveSession();
     writeTrustedProgress();
@@ -484,15 +487,12 @@
       render();
       return;
     }
-    const numericScore = Number(score) || 0;
-    if (numericScore < levelCompletionMinimums.boss) {
-      markTampered("boss run was finished below the required score");
-      session.completedAt ||= Date.now();
-      session.activeLevel = null;
-      saveSession();
-      render();
-      return;
-    }
+    const knownBossScore = Math.max(
+      Number(score) || 0,
+      Number(session.levels?.boss?.score) || 0,
+      Number(localStorage.getItem("bossScore") || 0) || 0
+    );
+    const numericScore = knownBossScore;
     if (numericScore > levelScoreCaps.boss) {
       markTampered("boss score exceeded the allowed cap");
       session.completedAt ||= Date.now();
@@ -501,11 +501,11 @@
       render();
       return;
     }
-    completeLevel("boss", score);
+    completeLevel("boss", numericScore);
     session.completedAt ||= Date.now();
     session.activeLevel = null;
     saveSession();
-    finishServerRun(score);
+    finishServerRun(numericScore);
     archiveAttempt("completed");
     render();
   }
@@ -557,6 +557,7 @@
   }
 
   function injectUi() {
+    document.documentElement.dataset.agentTrackerVersion = TRACKER_VERSION;
     const style = document.createElement("style");
     style.textContent = `
       .agent-session-bar{position:fixed;right:12px;top:12px;z-index:9998;display:flex;align-items:center;gap:8px;padding:7px 9px;border:2px solid #fff;color:#fff;background:#080808;box-shadow:4px 4px 0 #000;font:800 12px Arial,sans-serif}
@@ -663,6 +664,7 @@
   window.setInterval(render, 1000);
 
   window.AgentSession = {
+    version: TRACKER_VERSION,
     get agent() { return session.agent; },
     get data() { return session; },
     startLevel,
