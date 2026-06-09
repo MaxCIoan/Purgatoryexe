@@ -62,6 +62,12 @@
     level3: 100000,
     boss: 100000000
   };
+  const levelCompletionMinimums = {
+    level1: 200000,
+    level2: 10,
+    level3: 100000,
+    boss: 5000000
+  };
   const watchedStorageScores = [
     { key: "socialCreditSkill", level: "level1", cap: 50000000 },
     { key: "flappyBest", level: "level2", cap: 10000 },
@@ -413,9 +419,19 @@
       render();
       return;
     }
+    if (!Object.prototype.hasOwnProperty.call(levelScoreCaps, name)) {
+      markTampered(`unknown level "${name}" was completed`);
+      render();
+      return;
+    }
     const numericScore = Number(score) || 0;
     if (levelScoreCaps[name] && numericScore > levelScoreCaps[name]) {
       markTampered(`${name} score exceeded the allowed cap`);
+      render();
+      return;
+    }
+    if (numericScore < levelCompletionMinimums[name]) {
+      markTampered(`${name} was completed below the required score`);
       render();
       return;
     }
@@ -433,6 +449,11 @@
   function setLevelScore(name, score) {
     if (!name || name === "index" || name === "unknown") return;
     if (session.tampered) return;
+    if (!Object.prototype.hasOwnProperty.call(levelScoreCaps, name)) {
+      markTampered(`unknown level "${name}" was modified`);
+      render();
+      return;
+    }
     const numericScore = Number(score) || 0;
     if (levelScoreCaps[name] && numericScore > levelScoreCaps[name]) {
       markTampered(`${name} score exceeded the allowed cap`);
@@ -459,6 +480,23 @@
       session.completedAt ||= Date.now();
       session.activeLevel = null;
       session.totalScore = 0;
+      saveSession();
+      render();
+      return;
+    }
+    const numericScore = Number(score) || 0;
+    if (numericScore < levelCompletionMinimums.boss) {
+      markTampered("boss run was finished below the required score");
+      session.completedAt ||= Date.now();
+      session.activeLevel = null;
+      saveSession();
+      render();
+      return;
+    }
+    if (numericScore > levelScoreCaps.boss) {
+      markTampered("boss score exceeded the allowed cap");
+      session.completedAt ||= Date.now();
+      session.activeLevel = null;
       saveSession();
       render();
       return;
