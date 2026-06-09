@@ -56,6 +56,12 @@
   let session = readSession();
   let leaderboardCache = [];
   let serverRunPromise = null;
+  const levelScoreCaps = {
+    level1: 50000000,
+    level2: 10000,
+    level3: 100000,
+    boss: 100000000
+  };
   const watchedStorageScores = [
     { key: "socialCreditSkill", level: "level1", cap: 50000000 },
     { key: "flappyBest", level: "level2", cap: 10000 },
@@ -97,6 +103,7 @@
 
   function ensureServerRun() {
     if (!canUseApi() || !session.startedAt || page === "index" || page === "unknown") return Promise.resolve(null);
+    if (session.completedAt || session.tampered) return Promise.resolve(null);
     if (session.serverRun?.runId && session.serverRun?.token) return Promise.resolve(session.serverRun);
     if (serverRunPromise) return serverRunPromise;
     serverRunPromise = requestJson("api/run/start", { agent: session.agent })
@@ -230,6 +237,19 @@
       }
       if (trusted && stored > trustedScore) {
         markTampered(`${item.key} was increased outside the game`);
+        return;
+      }
+    }
+
+    for (const [name, cap] of Object.entries(levelScoreCaps)) {
+      const sessionScore = Number(session.levels?.[name]?.score) || 0;
+      const trustedScore = Number(trusted?.levels?.[name]?.score) || 0;
+      if (sessionScore > cap) {
+        markTampered(`${name} score exceeded the allowed cap`);
+        return;
+      }
+      if (trusted && sessionScore > trustedScore && session.levels?.[name]?.completedAt) {
+        markTampered(`${name} was increased outside the game`);
         return;
       }
     }
@@ -393,6 +413,12 @@
       render();
       return;
     }
+    const numericScore = Number(score) || 0;
+    if (levelScoreCaps[name] && numericScore > levelScoreCaps[name]) {
+      markTampered(`${name} score exceeded the allowed cap`);
+      render();
+      return;
+    }
     const level = ensureLevel(name);
     level.startedAt ||= Date.now();
     level.completedAt ||= Date.now();
@@ -407,6 +433,12 @@
   function setLevelScore(name, score) {
     if (!name || name === "index" || name === "unknown") return;
     if (session.tampered) return;
+    const numericScore = Number(score) || 0;
+    if (levelScoreCaps[name] && numericScore > levelScoreCaps[name]) {
+      markTampered(`${name} score exceeded the allowed cap`);
+      render();
+      return;
+    }
     const level = ensureLevel(name);
     level.score = Math.max(level.score || 0, Number(score) || 0);
     recalculateTotal();
