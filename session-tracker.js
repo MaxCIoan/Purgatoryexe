@@ -2,6 +2,7 @@
   const SESSION_KEY = "socialCreditAgentSessionV2";
   const HISTORY_KEY = "socialCreditAttemptHistoryV1";
   const PROFILE_KEY = "socialCreditAgentProfileV1";
+  const TRUSTED_PROGRESS_KEY = "socialCreditTrustedProgressV1";
   const page = document.body.dataset.level || "unknown";
   const appRoot = new URL(".", document.currentScript?.src || window.location.href);
   const appUrl = path => new URL(String(path).replace(/^\/+/, ""), appRoot).href;
@@ -38,6 +39,8 @@
       totalScore: 0,
       serverRun: null,
       officialResult: null,
+      tampered: false,
+      tamperReason: null,
       archived: false
     };
   }
@@ -53,6 +56,24 @@
   let session = readSession();
   let leaderboardCache = [];
   let serverRunPromise = null;
+  const watchedStorageScores = [
+    { key: "socialCreditSkill", level: "level1", cap: 50000000 },
+    { key: "flappyBest", level: "level2", cap: 10000 },
+    { key: "bossScore", level: "boss", cap: 100000000 }
+  ];
+  const progressStorageKeys = [
+    "socialCreditSkill",
+    "socialCreditFastPopups",
+    "socialCreditAutoClicker",
+    "socialCreditClickPower",
+    "socialCreditSigils",
+    "flappyBest",
+    "level2Complete",
+    "level3Complete",
+    "bossScore",
+    "bossRunSave",
+    "socialCreditBossLeaderboardV1"
+  ];
 
   function requestJson(path, payload, options = {}) {
     const init = payload
@@ -137,7 +158,94 @@
       .catch(() => {});
   }
 
+  function readTrustedProgress() {
+    try {
+      return JSON.parse(localStorage.getItem(TRUSTED_PROGRESS_KEY) || "null");
+    } catch {
+      return null;
+    }
+  }
+
+  function writeTrustedProgress() {
+    const levels = {};
+    Object.entries(session.levels || {}).forEach(([name, level]) => {
+      levels[name] = {
+        score: Number(level?.score) || 0,
+        completedAt: level?.completedAt || null
+      };
+    });
+    localStorage.setItem(TRUSTED_PROGRESS_KEY, JSON.stringify({
+      sessionId: session.id,
+      levels,
+      updatedAt: Date.now()
+    }));
+  }
+
+  function storageNumber(key) {
+    const number = Number(localStorage.getItem(key) || 0);
+    return Number.isFinite(number) ? number : 0;
+  }
+
+  function sanitizeLocalProgress() {
+    progressStorageKeys.forEach(key => localStorage.removeItem(key));
+    localStorage.setItem("socialCreditSkill", "0");
+    localStorage.setItem("flappyBest", "0");
+    localStorage.setItem("bossScore", "0");
+  }
+
+  function markTampered(reason) {
+    sanitizeLocalProgress();
+    session.tampered = true;
+    session.tamperReason = reason;
+    session.totalScore = 0;
+    session.officialResult = {
+      finalScore: 0,
+      elapsedMs: session.startedAt ? Math.max(0, Date.now() - session.startedAt) : 0,
+      tampered: true,
+      tamperReason: reason
+    };
+    Object.values(session.levels || {}).forEach(level => {
+      level.score = 0;
+      level.completedAt = null;
+    });
+    saveSession();
+    writeTrustedProgress();
+  }
+
+  function detectStorageTamper() {
+    const trusted = readTrustedProgress();
+    if (session.tampered) {
+      sanitizeLocalProgress();
+      writeTrustedProgress();
+      return;
+    }
+
+    for (const item of watchedStorageScores) {
+      const stored = storageNumber(item.key);
+      const sessionScore = Number(session.levels?.[item.level]?.score) || 0;
+      const trustedScore = Number(trusted?.levels?.[item.level]?.score) || 0;
+      if (stored > item.cap || sessionScore > item.cap) {
+        markTampered(`${item.key} exceeded the allowed score cap`);
+        return;
+      }
+      if (trusted && stored > trustedScore) {
+        markTampered(`${item.key} was increased outside the game`);
+        return;
+      }
+    }
+
+    if (!trusted) {
+      const hasUnverifiedProgress = watchedStorageScores.some(item => storageNumber(item.key) > 0);
+      if (hasUnverifiedProgress) {
+        markTampered("unverified localStorage progress was found");
+        return;
+      }
+      writeTrustedProgress();
+    }
+  }
+
   function importLegacyProgress() {
+    if (session.tampered) return;
     const now = Date.now();
     const level1Score = Number(localStorage.getItem("socialCreditSkill") || 0);
     const level2Score = Number(localStorage.getItem("flappyBest") || 0);
@@ -222,6 +330,7 @@
   }
 
   installTamperDeterrents();
+  detectStorageTamper();
   importLegacyProgress();
   const activeRequirement = pageRequirements[page];
   if (activeRequirement && !requirementMet(activeRequirement)) {
@@ -280,29 +389,48 @@
   }
 
   function completeLevel(name, score) {
+    if (session.tampered) {
+      render();
+      return;
+    }
     const level = ensureLevel(name);
     level.startedAt ||= Date.now();
     level.completedAt ||= Date.now();
     level.score = Math.max(level.score || 0, Number(score) || 0);
     recalculateTotal();
     saveSession();
+    writeTrustedProgress();
     syncCompletedLevel(name, true);
     render();
   }
 
   function setLevelScore(name, score) {
     if (!name || name === "index" || name === "unknown") return;
+    if (session.tampered) return;
     const level = ensureLevel(name);
     level.score = Math.max(level.score || 0, Number(score) || 0);
     recalculateTotal();
     saveSession();
+    writeTrustedProgress();
   }
 
   function recalculateTotal() {
+    if (session.tampered) {
+      session.totalScore = 0;
+      return;
+    }
     session.totalScore = Object.values(session.levels).reduce((sum, level) => sum + (Number(level.score) || 0), 0);
   }
 
   function finishRun(score) {
+    if (session.tampered) {
+      session.completedAt ||= Date.now();
+      session.activeLevel = null;
+      session.totalScore = 0;
+      saveSession();
+      render();
+      return;
+    }
     completeLevel("boss", score);
     session.completedAt ||= Date.now();
     session.activeLevel = null;
@@ -325,7 +453,8 @@
       "level2Complete",
       "level3Complete",
       "bossScore",
-      "bossRunSave"
+      "bossRunSave",
+      TRUSTED_PROGRESS_KEY
     ].forEach(key => localStorage.removeItem(key));
     session = freshSession();
     saveSession();
@@ -338,6 +467,7 @@
     localStorage.setItem(PROFILE_KEY, JSON.stringify({ agent, suffix }));
     session.agent = agent;
     saveSession();
+    writeTrustedProgress();
     render();
     return agent;
   }
@@ -431,7 +561,7 @@
       <p>Current time: ${new Date().toLocaleTimeString()}</p>
       <p>Total score: ${session.totalScore.toLocaleString()}</p>
       <p>Total run time: ${formatDuration(elapsed)}</p>
-      <p>Status: ${session.completedAt ? '<span class="complete">COMPLETED</span>' : session.startedAt ? '<span class="active">RUNNING</span>' : "NOT STARTED"}</p>
+      <p>Status: ${session.tampered ? `<span class="tampered">TAMPERED: ${session.tamperReason || "modified local storage"}</span>` : session.completedAt ? '<span class="complete">COMPLETED</span>' : session.startedAt ? '<span class="active">RUNNING</span>' : "NOT STARTED"}</p>
       <p>Official score: ${officialLine}</p>
       <div class="agent-menu-actions">
         <a href="${appUrl("profile.html")}">Edit Profile</a>
@@ -474,6 +604,7 @@
     newSession() {
       session = freshSession();
       saveSession();
+      writeTrustedProgress();
       startLevel(page);
       render();
     }
